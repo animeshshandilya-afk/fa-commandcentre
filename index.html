@@ -251,6 +251,7 @@
     <div class="nav-item" onclick="showPage('account-master',this)"><span>🏢</span> Account Master</div>
     <div class="nav-item" onclick="showPage('meeting-reviews',this)"><span>📝</span> Meeting Reviews</div>
     <div class="nav-item" onclick="showPage('mom-generator',this)"><span>✉️</span> MoM Generator</div>
+    <div class="nav-item" onclick="showPage('onboarding',this)"><span>🚀</span> Onboarding</div>
     <div class="nav-item" onclick="showPage('operational',this)"><span>📊</span> Operational Update</div>
     <div class="nav-item" onclick="showPage('growth',this)"><span>📈</span> Growth Pipeline</div>
     <div class="nav-section">Records</div>
@@ -885,6 +886,169 @@
     </div>
   </div>
 
+
+  <!-- ═══ ONBOARDING ═══ -->
+  <div id="page-onboarding" class="page">
+    <div class="page-header">
+      <div><h1>Onboarding</h1><p>Create and manage client onboarding projects — each with custom stages, RAG tracking and milestone emails</p></div>
+      <button class="btn btn-secondary" onclick="fetchCentralData().then(loadOnboarding)">↻ Refresh</button>
+    </div>
+    <div class="page-content">
+
+      <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border);">
+        <button id="ob-tab-dashboard" onclick="switchObTab('dashboard')" style="padding:10px 22px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--navy);border-bottom:3px solid var(--navy);margin-bottom:-2px;cursor:pointer;">Dashboard</button>
+        <button id="ob-tab-new" onclick="switchObTab('new')" style="padding:10px 22px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;">+ New Project</button>
+        <button id="ob-tab-manage" onclick="switchObTab('manage')" style="padding:10px 22px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;">Update Progress</button>
+        <button id="ob-tab-history" onclick="switchObTab('history')" style="padding:10px 22px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;">Account History</button>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="ob-view-dashboard">
+        <div class="stats-grid" style="margin-bottom:20px;">
+          <div class="stat-card teal"><div class="card-label">Active Projects</div><div class="card-value" id="ob-stat-active">—</div><div class="card-sub">In progress</div></div>
+          <div class="stat-card green"><div class="card-label">Completed</div><div class="card-value" id="ob-stat-done">—</div><div class="card-sub">All stages closed</div></div>
+          <div class="stat-card red"><div class="card-label">Red / At Risk</div><div class="card-value" id="ob-stat-red">—</div><div class="card-sub">Overdue stages</div></div>
+          <div class="stat-card amber"><div class="card-label">Avg Progress</div><div class="card-value" id="ob-stat-avg">—</div><div class="card-sub">Across active</div></div>
+        </div>
+        <div id="ob-cards-container"><div class="empty-state" style="background:white;border:1px solid var(--border);border-radius:12px;padding:60px;"><div class="icon">🚀</div><p>No projects yet — click "+ New Project" to start one</p></div></div>
+      </div>
+
+      <!-- NEW PROJECT -->
+      <div id="ob-view-new" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px;">Project Details</div>
+              <div style="display:flex;flex-direction:column;gap:11px;">
+                <div class="field"><label>Account *</label>
+                  <div class="search-select-wrap" id="ss-ob-wrap">
+                    <input type="text" class="search-select-input" id="ob-account" placeholder="Search account..." autocomplete="off" oninput="filterSS('ob')" onfocus="openSS('ob')">
+                    <div class="search-select-dropdown" id="ss-ob-dropdown"></div>
+                  </div>
+                </div>
+                <div class="field"><label>Project Name * <span style="font-weight:400;color:var(--text-light);">(e.g. "SFA 2.0 Rollout" or "DMS Phase 1")</span></label>
+                  <input type="text" id="ob-project-name" placeholder="Give this onboarding project a clear name...">
+                </div>
+                <div class="field"><label>Module(s) *</label>
+                  <select id="ob-module" onchange="loadModuleStages()">
+                    <option value="">— Select primary module —</option>
+                    <option value="SFA 2.0">SFA 2.0</option>
+                    <option value="DMS">DMS</option>
+                    <option value="Analytics Studio">Analytics Studio</option>
+                    <option value="Pulse AI">Pulse AI</option>
+                    <option value="FA One">FA One (L&D)</option>
+                    <option value="Beat-O-Meter">Beat-O-Meter</option>
+                    <option value="Van Sales">Van Sales</option>
+                    <option value="Retailer App">Retailer App</option>
+                    <option value="MT Module">MT Module</option>
+                    <option value="Custom">Custom / Multi-module</option>
+                  </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                  <div class="field"><label>Project Start Date *</label><input type="date" id="ob-start-date"></div>
+                  <div class="field"><label>Target End Date *</label><input type="date" id="ob-golive-target"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                  <div class="field"><label>CSM *</label>
+                    <select id="ob-csm"><option value="">— Select —</option><option>Vaishali Uniyal</option><option>Bhawana Malinda</option><option>Kanika Tandon</option><option>Hardeep Singh</option></select>
+                  </div>
+                  <div class="field"><label>AM</label>
+                    <select id="ob-am"><option value="">— Select —</option></select>
+                  </div>
+                </div>
+                <div class="field"><label>Client Project Lead</label><input type="text" id="ob-client-lead" placeholder="Name, Designation"></div>
+                <div class="field"><label>Client Exec Sponsor</label><input type="text" id="ob-exec-sponsor" placeholder="Name, Designation"></div>
+                <div class="field"><label>Notes / Special Requirements</label><textarea id="ob-notes" style="min-height:60px;resize:vertical;"></textarea></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title" style="margin-bottom:8px;">Client Access</div>
+              <div style="font-size:12px;color:var(--text-mid);line-height:1.6;margin-bottom:12px;">A unique link is generated per project. The same PIN works for individual project view and the account overview (all projects for that account).</div>
+              <div class="field"><label>4-Digit Client PIN *</label>
+                <input type="number" id="ob-pin" placeholder="e.g. 2847" min="1000" max="9999" style="font-size:22px;font-weight:700;letter-spacing:6px;text-align:center;padding:12px;">
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="position:sticky;top:80px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="card-title" style="margin:0;">Stage Planner</div>
+              <span style="font-size:11px;color:var(--text-light);" id="ob-stage-count">Select a module to load stages</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-mid);margin-bottom:12px;padding:8px 10px;background:var(--light-blue);border-radius:6px;">
+              BRD Scoping and BRD Sign-off are included on every project. Rename, mark N/A, or set dates for each stage below.
+            </div>
+
+            <div id="ob-stages-builder" style="display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;padding-right:4px;margin-bottom:12px;"></div>
+
+            <div style="border-top:1px solid var(--border);padding-top:12px;">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:8px;">Add Custom Stage</div>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="ob-custom-name" placeholder="Stage name..." style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;">
+                <input type="text" id="ob-custom-owner" placeholder="Owner" style="width:110px;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;">
+                <button onclick="addObCustomStage()" class="btn btn-secondary" style="font-size:12px;padding:8px 12px;white-space:nowrap;">+ Add</button>
+              </div>
+            </div>
+
+            <button onclick="createOnboarding()" class="btn btn-primary" style="width:100%;margin-top:16px;padding:13px;font-size:14px;">🚀 Create Project & Generate Link</button>
+
+            <div id="ob-created-success" style="display:none;margin-top:14px;background:#EAFAF1;border:1px solid #86EFAC;border-radius:8px;padding:16px;">
+              <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px;">✓ Project created!</div>
+              <div style="font-size:11px;color:var(--text-mid);margin-bottom:4px;">Project link (this project only):</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <input type="text" id="ob-generated-url" readonly style="flex:1;padding:7px 10px;border:1px solid #86EFAC;border-radius:6px;font-size:11px;background:white;">
+                <button onclick="copyText(document.getElementById('ob-generated-url').value,'Project link copied')" class="btn btn-secondary" style="font-size:11px;padding:7px 12px;">Copy</button>
+              </div>
+              <div style="font-size:11px;color:var(--text-mid);margin-bottom:4px;">Account overview link (all projects):</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <input type="text" id="ob-account-url" readonly style="flex:1;padding:7px 10px;border:1px solid #86EFAC;border-radius:6px;font-size:11px;background:white;">
+                <button onclick="copyText(document.getElementById('ob-account-url').value,'Account link copied')" class="btn btn-secondary" style="font-size:11px;padding:7px 12px;">Copy</button>
+              </div>
+              <div style="font-size:11px;color:var(--text-mid);">Client PIN: <strong id="ob-created-pin" style="color:var(--navy);letter-spacing:4px;font-size:15px;"></strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPDATE PROGRESS -->
+      <div id="ob-view-manage" style="display:none;">
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;">
+          <div style="position:sticky;top:80px;">
+            <div class="card" style="padding:14px;">
+              <div class="card-title" style="font-size:13px;margin-bottom:10px;">Active Projects</div>
+              <div id="ob-manage-list"><div style="font-size:12px;color:var(--text-light);">No projects yet</div></div>
+            </div>
+          </div>
+          <div id="ob-stage-panel">
+            <div class="empty-state" style="background:white;border:1px solid var(--border);border-radius:12px;padding:60px;">
+              <div class="icon">👈</div><p>Select a project to update its stages</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT HISTORY -->
+      <div id="ob-view-history" style="display:none;">
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex;gap:12px;align-items:center;">
+            <div class="field" style="flex:1;margin:0;">
+              <input type="text" id="ob-history-search" placeholder="🔍 Search by account name..." oninput="renderObHistory()" style="width:100%;">
+            </div>
+            <select id="ob-history-filter" onchange="renderObHistory()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;">
+              <option value="">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div id="ob-history-container"><div class="empty-state" style="background:white;border:1px solid var(--border);border-radius:12px;padding:60px;"><div class="icon">📋</div><p>No onboarding history yet</p></div></div>
+      </div>
+
+    </div>
+  </div>
+
 <!-- EDIT ACCOUNT MODAL -->
 <div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;" id="editAccountModal">
   <div style="background:white;border-radius:16px;padding:32px;width:660px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
@@ -957,7 +1121,7 @@ const FA_MODULES=['DMS','SFA 2.0','SFA Expansion','MT','FA Connect','Power BI/Pu
 const CSM_LIST=['Vaishali Uniyal','Bhawana Malinda','Kanika Tandon','Hardeep Singh'];
 const AM_LIST=['Swapnil Nawani','Vinay Kumar','Shivangi Nagarkoti','Khushi Mahajan','Abhishek Singh Jadaon','Hamza','Vaishali Mishra','Rushikesh','Suvarna','Manik Bedi','Vatsal Khosla','Upasana Negi','Tushar Rochlani','Charit Chopra'];
 const MS_SELECTIONS={demo:[],product:[]};
-let centralData={accounts:[],operational:[],pipeline:[],meetingReviews:[],targets:[]};
+let centralData={accounts:[],operational:[],pipeline:[],meetingReviews:[],targets:[],onboardings:[]};
 let allPipelineData=[];
 let currentPipelineFilter='all';
 let growthDiveFilter='all';
@@ -1019,18 +1183,19 @@ function refreshPage(id){
   else if(id==='growth-targets')loadGrowthTargets();
   else if(id==='meeting-reviews')loadMeetingReviews();
   else if(id==='mom-generator')loadMomGenerator();
+  else if(id==='onboarding')loadOnboarding();
 }
 
 // ── SEARCHABLE SELECT ──
 function buildSSDropdowns(){
   const accounts=(centralData.accounts||[]).filter(a=>(a['Account Status']||'Active')!=='Churned');
-  ['op','gr','mr','mom'].forEach(key=>{
+  ['op','gr','mr','mom','ob'].forEach(key=>{
     const dd=document.getElementById('ss-'+key+'-dropdown');if(!dd)return;
     dd.innerHTML=accounts.map(a=>{const n=a['Company Name']||a.company;return`<div class="ss-option" onclick="selectSS('${key}','${n.replace(/'/g,"\\'")}')"> ${n}</div>`;}).join('')||'<div class="ss-option no-match">No accounts yet</div>';
   });
 }
 function filterSS(key){
-  const inputId = key==='op'?'op-account':key==='gr'?'gr-account':key==='mr'?'mr-account':'mom-account';
+  const inputId = key==='op'?'op-account':key==='gr'?'gr-account':key==='mr'?'mr-account':key==='mom'?'mom-account':'ob-account';
   const val=document.getElementById(inputId).value.toLowerCase();
   const dd=document.getElementById('ss-'+key+'-dropdown');
   const accounts=(centralData.accounts||[]).filter(a=>(a['Account Status']||'Active')!=='Churned');
@@ -1038,9 +1203,9 @@ function filterSS(key){
   dd.classList.add('open');
 }
 function openSS(key){buildSSDropdowns();document.getElementById('ss-'+key+'-dropdown').classList.add('open'); if(key==='mr'){loadPrevActionables(document.getElementById('mr-account').value);}}
-function selectSS(key,val){const inputId=key==='op'?'op-account':key==='gr'?'gr-account':key==='mr'?'mr-account':'mom-account';document.getElementById(inputId).value=val;document.getElementById('ss-'+key+'-dropdown').classList.remove('open');if(key==='mr')loadPrevActionables(val);}
+function selectSS(key,val){const inputId=key==='op'?'op-account':key==='gr'?'gr-account':key==='mr'?'mr-account':key==='mom'?'mom-account':'ob-account';document.getElementById(inputId).value=val;document.getElementById('ss-'+key+'-dropdown').classList.remove('open');if(key==='mr')loadPrevActionables(val);}
 function handleOutsideClick(e){
-  ['op','gr','mr','mom'].forEach(key=>{const w=document.getElementById('ss-'+key+'-wrap');if(w&&!w.contains(e.target))document.getElementById('ss-'+key+'-dropdown').classList.remove('open');});
+  ['op','gr','mr','mom','ob'].forEach(key=>{const w=document.getElementById('ss-'+key+'-wrap');if(w&&!w.contains(e.target))document.getElementById('ss-'+key+'-dropdown').classList.remove('open');});
   ['demo','product'].forEach(key=>{const w=document.getElementById('ms-'+key+'-wrap');if(w&&!w.contains(e.target)){document.getElementById('ms-'+key+'-dropdown').classList.remove('open');document.getElementById('ms-'+key+'-display').classList.remove('open');}});
 }
 
@@ -2077,6 +2242,679 @@ async function downloadMomDocx() {
     btn.textContent = '📄 Download Word';
     btn.disabled = false;
   }
+}
+
+
+// ================================================================
+// ONBOARDING — FULL PROJECT MANAGEMENT SYSTEM
+// ================================================================
+
+// ── Module stage templates ──
+const OB_MODULE_STAGES = {
+  'SFA 2.0': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'Hierarchy & Data Collection', owner:'Client IT' },
+    { label:'SFA Configuration', owner:'FA Implementation' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'Manager & ASM Training', owner:'FA CSM' },
+    { label:'Field Rep Training', owner:'FA CSM' },
+    { label:'Pilot Go-Live', owner:'FA + Client' },
+    { label:'Full Go-Live', owner:'FA + Client' },
+    { label:'Hypercare (2–4 weeks)', owner:'FA CSM' },
+    { label:'First MBR / Health Check', owner:'FA CSM + AM' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'DMS': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'Distributor Mapping & Data', owner:'Client + FA' },
+    { label:'DMS Configuration', owner:'FA Implementation' },
+    { label:'Data Migration', owner:'FA Implementation' },
+    { label:'Distributor Training', owner:'FA CSM' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'Go-Live', owner:'FA + Client' },
+    { label:'Hypercare', owner:'FA CSM' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'Analytics Studio': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'Data Source Setup', owner:'FA Implementation' },
+    { label:'KPI & Dashboard Design', owner:'FA CSM + Client' },
+    { label:'Report Configuration', owner:'FA Implementation' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'User Training', owner:'FA CSM' },
+    { label:'Go-Live', owner:'FA + Client' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'Pulse AI': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'AI Configuration & SKU Setup', owner:'FA Implementation' },
+    { label:'Pilot Testing', owner:'FA + Client' },
+    { label:'User Training', owner:'FA CSM' },
+    { label:'Full Deployment', owner:'FA + Client' },
+    { label:'Performance Review', owner:'FA CSM + AM' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'FA One': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'Content & Module Setup', owner:'FA Implementation' },
+    { label:'Admin Training', owner:'FA CSM' },
+    { label:'Field Force Onboarding', owner:'FA CSM' },
+    { label:'Go-Live', owner:'FA + Client' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'Beat-O-Meter': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'Beat Plan Setup', owner:'FA Implementation' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'Manager Training', owner:'FA CSM' },
+    { label:'Go-Live', owner:'FA + Client' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'Van Sales': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'Route & Vehicle Configuration', owner:'FA Implementation' },
+    { label:'Inventory Setup', owner:'FA + Client' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'Driver / Sales Training', owner:'FA CSM' },
+    { label:'Pilot Go-Live', owner:'FA + Client' },
+    { label:'Full Go-Live', owner:'FA + Client' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'Retailer App': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'App Configuration', owner:'FA Implementation' },
+    { label:'Retailer Onboarding Plan', owner:'FA CSM + Client' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'Retailer Training / Activation', owner:'FA CSM' },
+    { label:'Go-Live', owner:'FA + Client' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'MT Module': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'MT Chain & Outlet Setup', owner:'FA Implementation' },
+    { label:'Compliance Config', owner:'FA Implementation' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'Training', owner:'FA CSM' },
+    { label:'Go-Live', owner:'FA + Client' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+  'Custom': [
+    { label:'BRD Scoping', owner:'FA CSM + Client' },
+    { label:'BRD Sign-off', owner:'Client Leadership' },
+    { label:'Requirements & Setup', owner:'FA Implementation' },
+    { label:'Configuration', owner:'FA Implementation' },
+    { label:'UAT', owner:'Client + FA' },
+    { label:'Training', owner:'FA CSM' },
+    { label:'Go-Live', owner:'FA + Client' },
+    { label:'Formal Sign-off', owner:'Client Leadership' },
+  ],
+};
+
+const OB_RAG = {
+  green:  { color:'#4BA428', bg:'#EAFAF1', label:'On Track' },
+  amber:  { color:'#F59E0B', bg:'#FFFBF0', label:'At Risk' },
+  red:    { color:'#D63031', bg:'#FFF5F5', label:'Delayed' },
+  na:     { color:'#94A3B8', bg:'#F1F5F9', label:'N/A' },
+  pending:{ color:'#94A3B8', bg:'#F1F5F9', label:'Not Started' },
+  done:   { color:'#4BA428', bg:'#EAFAF1', label:'Complete' },
+};
+
+let obStagesBuilder = [];
+let selectedObToken = null;
+
+// ── RAG calculation ──
+function calcStageRag(stage) {
+  if (stage.is_na) return 'na';
+  if (stage.actual_end) return 'done';
+  if (!stage.planned_end) return 'pending';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const planned = new Date(stage.planned_end);
+  const diffDays = Math.ceil((today - planned) / 86400000);
+  if (diffDays <= 0) return 'green';
+  if (diffDays <= 7) return 'amber';
+  return 'red';
+}
+
+function calcProjectRag(stages) {
+  if (!stages || !stages.length) return 'pending';
+  const allDone = stages.every(s => s.is_na || s.actual_end);
+  if (allDone) return 'done';
+  const rags = stages.filter(s => !s.is_na).map(s => calcStageRag(s));
+  if (rags.includes('red')) return 'red';
+  if (rags.includes('amber')) return 'amber';
+  return 'green';
+}
+
+function calcProjectPct(stages) {
+  if (!stages || !stages.length) return 0;
+  const countable = stages.filter(s => !s.is_na);
+  if (!countable.length) return 100;
+  const done = countable.filter(s => !!s.actual_end).length;
+  return Math.round(done / countable.length * 100);
+}
+
+// ── Tab switching ──
+function switchObTab(tab) {
+  ['dashboard','new','manage','history'].forEach(t => {
+    const view = document.getElementById('ob-view-' + t);
+    const btn = document.getElementById('ob-tab-' + t);
+    if (view) view.style.display = t === tab ? 'block' : 'none';
+    if (btn) {
+      btn.style.color = t === tab ? 'var(--navy)' : 'var(--text-mid)';
+      btn.style.fontWeight = t === tab ? '600' : '500';
+      btn.style.borderBottom = t === tab ? '3px solid var(--navy)' : '3px solid transparent';
+    }
+  });
+  if (tab === 'dashboard') renderObDashboard();
+  if (tab === 'manage') renderObManageList();
+  if (tab === 'history') renderObHistory();
+}
+
+function loadOnboarding() {
+  // Populate AM dropdown
+  const amSel = document.getElementById('ob-am');
+  if (amSel && AM_LIST) {
+    amSel.innerHTML = '<option value="">— Select —</option>' + AM_LIST.map(a=>`<option>${a}</option>`).join('');
+  }
+  // Default start date to today
+  const sd = document.getElementById('ob-start-date');
+  if (sd && !sd.value) sd.value = new Date().toISOString().split('T')[0];
+  renderObDashboard();
+}
+
+// ── Stage builder ──
+function loadModuleStages() {
+  const module = document.getElementById('ob-module').value;
+  if (!module) { obStagesBuilder = []; renderObStagesBuilder(); return; }
+  const template = OB_MODULE_STAGES[module] || OB_MODULE_STAGES['Custom'];
+  obStagesBuilder = template.map((s,i) => ({
+    id: 'stage_' + i,
+    label: s.label,
+    owner: s.owner,
+    planned_end: '',
+    actual_end: '',
+    is_na: false,
+    is_mandatory: s.label === 'BRD Scoping' || s.label === 'BRD Sign-off',
+  }));
+  renderObStagesBuilder();
+}
+
+function renderObStagesBuilder() {
+  const container = document.getElementById('ob-stages-builder');
+  const cnt = document.getElementById('ob-stage-count');
+  if (!container) return;
+  const active = obStagesBuilder.filter(s => !s.is_na).length;
+  if (cnt) cnt.textContent = active + ' active stage' + (active !== 1 ? 's' : '');
+
+  container.innerHTML = obStagesBuilder.map((s,i) => `
+    <div style="background:${s.is_na?'var(--off-white)':'white'};border:1px solid var(--border);border-radius:8px;padding:10px 12px;opacity:${s.is_na?'.55':'1'};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="width:20px;height:20px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0;">${i+1}</div>
+        <input type="text" value="${s.label}" onchange="obStagesBuilder[${i}].label=this.value"
+          style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;font-weight:600;"
+          ${s.is_mandatory?'style="background:var(--light-blue);"':''}>
+        <input type="text" value="${s.owner}" onchange="obStagesBuilder[${i}].owner=this.value"
+          placeholder="Owner" style="width:130px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:inherit;">
+        ${s.is_mandatory ? '<span style="font-size:9px;font-weight:700;color:var(--blue);padding:2px 6px;background:var(--light-blue);border-radius:8px;">REQUIRED</span>' :
+          `<button onclick="obStagesBuilder[${i}].is_na=!obStagesBuilder[${i}].is_na;renderObStagesBuilder()"
+            style="padding:3px 8px;border:1px solid var(--border);background:${s.is_na?'#FFF5F5':'var(--off-white)'};color:${s.is_na?'var(--red)':'var(--text-mid)'};border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;">
+            ${s.is_na?'Restore':'N/A'}</button>`}
+        ${!s.is_mandatory ? `<button onclick="obStagesBuilder.splice(${i},1);renderObStagesBuilder()"
+          style="padding:3px 7px;border:1px solid var(--border);background:none;color:var(--text-light);border-radius:5px;font-size:12px;cursor:pointer;">×</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Planned End Date</label>
+          <input type="date" value="${s.planned_end}" onchange="obStagesBuilder[${i}].planned_end=this.value"
+            style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;margin-top:3px;"></div>
+        <div><label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Actual End Date</label>
+          <input type="date" value="${s.actual_end}" onchange="obStagesBuilder[${i}].actual_end=this.value"
+            style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;margin-top:3px;"></div>
+      </div>
+    </div>`).join('');
+}
+
+function addObCustomStage() {
+  const name = document.getElementById('ob-custom-name').value.trim();
+  const owner = document.getElementById('ob-custom-owner').value.trim();
+  if (!name) { showToast('Enter a stage name'); return; }
+  obStagesBuilder.push({ id:'stage_'+Date.now(), label:name, owner:owner||'FA CSM', planned_end:'', actual_end:'', is_na:false, is_mandatory:false });
+  renderObStagesBuilder();
+  document.getElementById('ob-custom-name').value = '';
+  document.getElementById('ob-custom-owner').value = '';
+}
+
+// ── Create onboarding ──
+function generateToken() { return Math.random().toString(36).substring(2,10).toUpperCase() + Math.random().toString(36).substring(2,10).toUpperCase(); }
+
+async function createOnboarding() {
+  const account = document.getElementById('ob-account').value.trim();
+  const projectName = document.getElementById('ob-project-name').value.trim();
+  const module = document.getElementById('ob-module').value;
+  const startDate = document.getElementById('ob-start-date').value;
+  const golive = document.getElementById('ob-golive-target').value;
+  const csm = document.getElementById('ob-csm').value;
+  const am = document.getElementById('ob-am').value;
+  const pin = document.getElementById('ob-pin').value;
+  const clientLead = document.getElementById('ob-client-lead').value.trim();
+  const execSponsor = document.getElementById('ob-exec-sponsor').value.trim();
+  const notes = document.getElementById('ob-notes').value.trim();
+
+  if (!account) { showToast('Please select an account'); return; }
+  if (!projectName) { showToast('Please enter a project name'); return; }
+  if (!module) { showToast('Please select a module'); return; }
+  if (!golive) { showToast('Please set a target end date'); return; }
+  if (!csm) { showToast('Please assign a CSM'); return; }
+  if (!pin || String(pin).length < 4) { showToast('Please set a 4-digit PIN'); return; }
+  if (!obStagesBuilder.length) { showToast('Please select a module to load stages'); return; }
+
+  const token = generateToken();
+  // Account token = hash of account name for consistent URL across projects
+  const accountToken = btoa(account).replace(/[^a-zA-Z0-9]/g,'').substring(0,16);
+
+  const data = {
+    type: 'onboarding',
+    timestamp: new Date().toISOString(),
+    token, accountToken, account, projectName, module,
+    startDate, goliveTarget: golive, csm, am, pin,
+    clientLead, execSponsor, notes,
+    stages: JSON.stringify(obStagesBuilder),
+    status: 'Active',
+    createdBy: getCurrentUser()
+  };
+
+  await syncToSheets(data);
+  await fetchCentralData();
+
+  const base = 'https://animeshshandilya-afk.github.io/fa-onboarding/';
+  document.getElementById('ob-generated-url').value = base + '?token=' + token;
+  document.getElementById('ob-account-url').value = base + '?account=' + accountToken + '&pin=' + pin;
+  document.getElementById('ob-created-pin').textContent = pin;
+  document.getElementById('ob-created-success').style.display = 'block';
+  showToast('Project created — ' + projectName);
+}
+
+// ── Dashboard ──
+function renderObDashboard() {
+  const obs = centralData.onboardings || [];
+  const role = getUserRole(); const u = getCurrentUser();
+  let visible = obs;
+  if (role === 'csm') visible = obs.filter(o => o['CSM'] === u);
+  if (role === 'am') visible = obs.filter(o => o['AM'] === u);
+
+  const active = visible.filter(o => o['Status'] !== 'Completed');
+  const done = visible.filter(o => o['Status'] === 'Completed');
+  const red = active.filter(o => {
+    const stages = safeParseStages(o['Stages'] || o.stages);
+    return calcProjectRag(stages) === 'red';
+  });
+  const avgPcts = active.map(o => calcProjectPct(safeParseStages(o['Stages'] || o.stages)));
+  const avg = avgPcts.length ? Math.round(avgPcts.reduce((a,b)=>a+b,0)/avgPcts.length) : 0;
+
+  document.getElementById('ob-stat-active').textContent = active.length || '0';
+  document.getElementById('ob-stat-done').textContent = done.length || '0';
+  document.getElementById('ob-stat-red').textContent = red.length || '0';
+  document.getElementById('ob-stat-avg').textContent = active.length ? avg + '%' : '—';
+
+  const container = document.getElementById('ob-cards-container');
+  if (!visible.length) {
+    container.innerHTML = `<div class="empty-state" style="background:white;border:1px solid var(--border);border-radius:12px;padding:60px;"><div class="icon">🚀</div><p>No projects yet</p></div>`;
+    return;
+  }
+
+  container.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;">${
+    visible.map(o => renderObCard(o)).join('')
+  }</div>`;
+}
+
+function safeParseStages(raw) {
+  if (!raw) return [];
+  if (typeof raw === 'object') return raw;
+  try { return JSON.parse(raw); } catch(e) { return []; }
+}
+
+function renderObCard(ob) {
+  const stages = safeParseStages(ob['Stages'] || ob.stages);
+  const pct = calcProjectPct(stages);
+  const rag = calcProjectRag(stages);
+  const rc = OB_RAG[rag] || OB_RAG.pending;
+  const golive = ob['Target Go-Live'] || ob['goliveTarget'] || '';
+  const today = new Date();
+  const daysLeft = golive ? Math.ceil((new Date(golive) - today) / 86400000) : null;
+  const token = ob['Token'] || ob.token || '';
+  const accountToken = ob['Account Token'] || ob.accountToken || '';
+  const isDone = ob['Status'] === 'Completed' || pct === 100;
+
+  return `<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:var(--card-shadow);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--navy);">${ob['Project Name'] || ob.projectName || ob['Account Name'] || ob.account}</div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px;">${ob['Account Name'] || ob.account} · ${ob['Module'] || ob.module || '—'}</div>
+      </div>
+      <span style="font-size:10px;font-weight:700;padding:3px 10px;background:${rc.bg};color:${rc.color};border-radius:12px;border:1px solid ${rc.color}40;">
+        ${isDone ? '✓ Completed' : rc.label}
+      </span>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:4px;">
+        <span>${stages.filter(s=>!s.is_na&&s.actual_end).length} / ${stages.filter(s=>!s.is_na).length} stages done</span>
+        <span style="font-weight:600;color:${rc.color};">${pct}%</span>
+      </div>
+      <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;">
+        <div style="background:${rc.color};width:${pct}%;height:100%;border-radius:4px;"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:12px;">
+      ${stages.map(s => {
+        const sr = s.is_na ? 'na' : (s.actual_end ? 'done' : calcStageRag(s));
+        const sc = OB_RAG[sr] || OB_RAG.pending;
+        return `<div title="${s.label}: ${sc.label}" style="width:16px;height:16px;background:${sc.bg};border:1.5px solid ${sc.color};border-radius:3px;"></div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--text-light);">
+        ${daysLeft !== null ? (isDone ? '✓ Complete' : daysLeft < 0 ? `<span style="color:var(--red);font-weight:600;">${Math.abs(daysLeft)}d overdue</span>` : `${daysLeft}d remaining`) : '—'}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="selectOb('${token}')" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Update</button>
+        <button onclick="copyText('https://animeshshandilya-afk.github.io/fa-onboarding/?token=${token}','Link copied')" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">📋 Link</button>
+        ${pct >= 50 && !isDone ? `<button onclick="generateMilestoneEmail('${token}')" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;color:var(--gold);border-color:var(--gold);">✦ Email</button>` : ''}
+      </div>
+    </div>
+    <div id="ob-email-${token}" style="display:none;margin-top:10px;"></div>
+  </div>`;
+}
+
+// ── Update Progress ──
+function renderObManageList() {
+  const obs = centralData.onboardings || [];
+  const role = getUserRole(); const u = getCurrentUser();
+  let visible = obs.filter(o => o['Status'] !== 'Completed');
+  if (role === 'csm') visible = visible.filter(o => o['CSM'] === u);
+
+  const container = document.getElementById('ob-manage-list');
+  if (!visible.length) { container.innerHTML = '<div style="font-size:12px;color:var(--text-light);">No active projects</div>'; return; }
+  container.innerHTML = visible.map(o => {
+    const stages = safeParseStages(o['Stages'] || o.stages);
+    const pct = calcProjectPct(stages);
+    const rag = calcProjectRag(stages);
+    const rc = OB_RAG[rag] || OB_RAG.pending;
+    const token = o['Token'] || o.token || '';
+    const isSelected = token === selectedObToken;
+    return `<div onclick="selectOb('${token}')"
+      style="padding:12px;border-radius:8px;cursor:pointer;border:2px solid ${isSelected?'var(--navy)':'var(--border)'};background:${isSelected?'var(--navy)':'white'};margin-bottom:6px;">
+      <div style="font-size:12px;font-weight:600;color:${isSelected?'white':'var(--navy)'};">${o['Project Name'] || o.projectName || o['Account Name'] || o.account}</div>
+      <div style="font-size:10px;color:${isSelected?'rgba(255,255,255,.6)':'var(--text-light)'};margin-top:2px;">${o['Account Name'] || o.account} · ${o['Module'] || o.module || '—'}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:7px;">
+        <div style="flex:1;background:${isSelected?'rgba(255,255,255,.2)':'var(--border)'};border-radius:3px;height:4px;">
+          <div style="background:${isSelected?'var(--gold)':rc.color};width:${pct}%;height:100%;border-radius:3px;"></div>
+        </div>
+        <span style="font-size:10px;font-weight:600;color:${isSelected?'var(--gold)':rc.color};">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectOb(token) {
+  selectedObToken = token;
+  renderObManageList();
+  renderObStagePanel();
+  switchObTab('manage');
+}
+
+function renderObStagePanel() {
+  const ob = (centralData.onboardings || []).find(o => (o['Token'] || o.token) === selectedObToken);
+  if (!ob) return;
+  const stages = safeParseStages(ob['Stages'] || ob.stages);
+  const pct = calcProjectPct(stages);
+  const rag = calcProjectRag(stages);
+  const rc = OB_RAG[rag] || OB_RAG.pending;
+  const isDone = ob['Status'] === 'Completed' || pct === 100;
+  const golive = ob['Target Go-Live'] || ob.goliveTarget || '—';
+  const panel = document.getElementById('ob-stage-panel');
+
+  panel.innerHTML = `
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--navy);">${ob['Project Name'] || ob.projectName || ob['Account Name'] || ob.account}</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${ob['Account Name'] || ob.account} · ${ob['Module'] || ob.module} · Target: ${golive}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:${rc.color};">${pct}%</div>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;background:${rc.bg};color:${rc.color};border-radius:10px;">${isDone?'Completed':rc.label}</span>
+        </div>
+      </div>
+      <div style="background:var(--border);border-radius:6px;height:10px;overflow:hidden;">
+        <div style="background:${isDone?'#4BA428':rc.color};width:${pct}%;height:100%;border-radius:6px;"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${stages.map((s,i) => {
+        const sr = s.is_na ? 'na' : (s.actual_end ? 'done' : calcStageRag(s));
+        const sc = OB_RAG[sr] || OB_RAG.pending;
+        return `<div style="background:white;border:1.5px solid ${sc.color}40;border-left:4px solid ${sc.color};border-radius:10px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <div style="width:26px;height:26px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;">${i+1}</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;color:var(--navy);">${s.label}</div>
+              <div style="font-size:11px;color:var(--text-light);">Owner: ${s.owner}</div>
+            </div>
+            <span style="font-size:10px;font-weight:600;padding:2px 10px;background:${sc.bg};color:${sc.color};border-radius:10px;border:1px solid ${sc.color}40;">${sc.label}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end;">
+            <div><label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Planned End</label>
+              <input type="date" value="${s.planned_end||''}" id="ob-pe-${i}"
+                style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;margin-top:3px;"></div>
+            <div><label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Actual End</label>
+              <input type="date" value="${s.actual_end||''}" id="ob-ae-${i}"
+                style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;margin-top:3px;"></div>
+            <div style="display:flex;gap:6px;align-items:flex-end;">
+              ${!s.is_mandatory ? `<button onclick="toggleObNa(${i})"
+                style="flex:1;padding:7px 8px;border:1px solid var(--border);background:${s.is_na?'#FFF5F5':'var(--off-white)'};color:${s.is_na?'var(--red)':'var(--text-mid)'};border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+                ${s.is_na?'Restore':'N/A'}</button>` : '<div style="flex:1;"></div>'}
+              <button onclick="saveObStage(${i})" class="btn btn-secondary" style="flex:1;font-size:11px;padding:7px 8px;">Save</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+      ${!isDone ? `<button onclick="markObComplete('${selectedObToken}')" class="btn btn-primary" style="flex:1;">✓ Mark Project Complete</button>` : ''}
+      <button onclick="generateMilestoneEmail('${selectedObToken}')" class="btn btn-secondary" style="flex:1;">✦ Generate Milestone Email</button>
+    </div>
+    <div id="ob-email-panel-${selectedObToken}" style="margin-top:16px;display:none;"></div>`;
+}
+
+function toggleObNa(stageIdx) {
+  const ob = (centralData.onboardings || []).find(o => (o['Token'] || o.token) === selectedObToken);
+  if (!ob) return;
+  const stages = safeParseStages(ob['Stages'] || ob.stages);
+  stages[stageIdx].is_na = !stages[stageIdx].is_na;
+  saveObStageDirect(stages);
+}
+
+async function saveObStage(stageIdx) {
+  const ob = (centralData.onboardings || []).find(o => (o['Token'] || o.token) === selectedObToken);
+  if (!ob) return;
+  const stages = safeParseStages(ob['Stages'] || ob.stages);
+  stages[stageIdx].planned_end = document.getElementById('ob-pe-' + stageIdx)?.value || '';
+  stages[stageIdx].actual_end = document.getElementById('ob-ae-' + stageIdx)?.value || '';
+  saveObStageDirect(stages);
+}
+
+async function saveObStageDirect(stages) {
+  const ob = (centralData.onboardings || []).find(o => (o['Token'] || o.token) === selectedObToken);
+  if (!ob) return;
+  const allDone = stages.filter(s=>!s.is_na).every(s=>!!s.actual_end);
+  await syncToSheets({
+    type: 'onboarding_update',
+    token: selectedObToken,
+    stages: JSON.stringify(stages),
+    status: allDone ? 'Completed' : 'Active',
+    updatedBy: getCurrentUser(),
+    updatedAt: new Date().toISOString()
+  });
+  await fetchCentralData();
+  renderObStagePanel();
+  renderObManageList();
+  renderObDashboard();
+  showToast('Stage updated');
+}
+
+async function markObComplete(token) {
+  const ob = (centralData.onboardings || []).find(o => (o['Token'] || o.token) === token);
+  if (!ob) return;
+  const stages = safeParseStages(ob['Stages'] || ob.stages);
+  // Mark all non-NA stages as complete with today's date
+  const today = new Date().toISOString().split('T')[0];
+  stages.forEach(s => { if (!s.is_na && !s.actual_end) s.actual_end = today; });
+  await syncToSheets({
+    type: 'onboarding_update',
+    token,
+    stages: JSON.stringify(stages),
+    status: 'Completed',
+    completedAt: today,
+    updatedBy: getCurrentUser(),
+    updatedAt: new Date().toISOString()
+  });
+  await fetchCentralData();
+  renderObStagePanel();
+  renderObDashboard();
+  showToast('Project marked complete');
+}
+
+// ── Account History ──
+function renderObHistory() {
+  const obs = centralData.onboardings || [];
+  const search = (document.getElementById('ob-history-search')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('ob-history-filter')?.value || '';
+  const role = getUserRole(); const u = getCurrentUser();
+
+  let visible = obs;
+  if (role === 'csm') visible = obs.filter(o => o['CSM'] === u);
+  if (role === 'am') visible = obs.filter(o => o['AM'] === u);
+  if (search) visible = visible.filter(o => (o['Account Name']||o.account||'').toLowerCase().includes(search) || (o['Project Name']||o.projectName||'').toLowerCase().includes(search));
+  if (statusFilter) visible = visible.filter(o => o['Status'] === statusFilter);
+  visible = visible.sort((a,b) => (b['Timestamp']||b.timestamp||'') > (a['Timestamp']||a.timestamp||'') ? 1 : -1);
+
+  const container = document.getElementById('ob-history-container');
+  if (!visible.length) { container.innerHTML = '<div class="empty-state" style="background:white;border:1px solid var(--border);border-radius:12px;padding:60px;"><div class="icon">📋</div><p>No projects match your search</p></div>'; return; }
+
+  // Group by account
+  const byAccount = {};
+  visible.forEach(o => {
+    const acc = o['Account Name'] || o.account || '—';
+    if (!byAccount[acc]) byAccount[acc] = [];
+    byAccount[acc].push(o);
+  });
+
+  container.innerHTML = Object.entries(byAccount).map(([acc, projects]) => {
+    const activeCount = projects.filter(p => p['Status'] !== 'Completed').length;
+    const doneCount = projects.filter(p => p['Status'] === 'Completed').length;
+    return `<div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--navy);">${acc}</div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:2px;">${projects.length} project${projects.length!==1?'s':''} · ${activeCount} active · ${doneCount} completed</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${projects.map(o => {
+          const stages = safeParseStages(o['Stages'] || o.stages);
+          const pct = calcProjectPct(stages);
+          const rag = calcProjectRag(stages);
+          const rc = OB_RAG[o['Status']==='Completed'?'done':rag] || OB_RAG.pending;
+          const isDone = o['Status'] === 'Completed';
+          const token = o['Token'] || o.token || '';
+          return `<div style="display:flex;align-items:center;gap:14px;padding:12px;background:var(--off-white);border-radius:8px;">
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;color:var(--navy);">${o['Project Name'] || o.projectName || '—'}</div>
+              <div style="font-size:11px;color:var(--text-light);margin-top:2px;">${o['Module'] || o.module || '—'} · CSM: ${o['CSM'] || o.csm || '—'} · ${o['Timestamp']?new Date(o['Timestamp']).toLocaleDateString('en-IN'):''}</div>
+            </div>
+            <div style="width:80px;">
+              <div style="background:var(--border);border-radius:3px;height:6px;overflow:hidden;">
+                <div style="background:${rc.color};width:${pct}%;height:100%;border-radius:3px;"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text-mid);margin-top:3px;text-align:center;">${pct}%</div>
+            </div>
+            <span style="font-size:10px;font-weight:700;padding:3px 10px;background:${rc.bg};color:${rc.color};border-radius:10px;border:1px solid ${rc.color}40;">${isDone?'✓ Done':rc.label}</span>
+            ${!isDone?`<button onclick="selectOb('${token}')" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Update</button>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Milestone Email ──
+async function generateMilestoneEmail(token) {
+  const ob = (centralData.onboardings || []).find(o => (o['Token'] || o.token) === token);
+  if (!ob) return;
+  const panelId = 'ob-email-panel-' + token;
+  let panel = document.getElementById(panelId) || document.getElementById('ob-email-' + token);
+  if (!panel) return;
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="font-size:12px;color:var(--text-light);padding:8px;">⏳ Generating milestone email...</div>';
+
+  const stages = safeParseStages(ob['Stages'] || ob.stages);
+  const done = stages.filter(s => !s.is_na && s.actual_end).map(s => s.label);
+  const next = stages.filter(s => !s.is_na && !s.actual_end).slice(0,3).map(s => s.label);
+  const pct = calcProjectPct(stages);
+
+  const prompt = `You are a Senior Customer Success Manager at FieldAssist. Write a professional milestone update email for a client onboarding project.
+
+CLIENT: ${ob['Account Name'] || ob.account}
+PROJECT: ${ob['Project Name'] || ob.projectName}
+MODULE: ${ob['Module'] || ob.module}
+PROGRESS: ${pct}% complete
+COMPLETED STAGES: ${done.join(', ') || 'None yet'}
+UPCOMING STAGES: ${next.join(', ') || 'Final stages'}
+TARGET END DATE: ${ob['Target Go-Live'] || ob.goliveTarget || 'TBD'}
+CLIENT EXEC SPONSOR: ${ob['Exec Sponsor'] || ob.execSponsor || 'Leadership Team'}
+
+Write a warm, value-led milestone update. Frame completed stages as business capabilities gained — not tasks done. Show momentum and confidence about what comes next. 150-200 words.
+
+Respond JSON only: {"subject":"...","body":"..."}`;
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, { method:'POST', body: JSON.stringify({ proxy_type:'mbr_generator', system_prompt:'Senior CS Manager at FieldAssist. JSON only.', user_prompt: prompt }) });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    let parsed = null;
+    try { const clean = json.text.replace(/```json|```/g,'').trim(); const s=clean.indexOf('{'),e=clean.lastIndexOf('}'); if(s!==-1&&e!==-1)parsed=JSON.parse(clean.substring(s,e+1)); } catch(pe){}
+    if (!parsed) { panel.innerHTML = '<div style="font-size:12px;color:var(--red);">Could not generate email. Try again.</div>'; return; }
+    panel.innerHTML = `<div style="background:var(--off-white);border:1px solid var(--border);border-radius:10px;padding:14px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:10px;">✦ Milestone Email</div>
+      <div style="background:white;border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);margin-bottom:4px;">Subject</div>
+        <div style="font-size:13px;font-weight:500;color:var(--navy);">${parsed.subject}</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);margin-bottom:6px;">Body</div>
+        <div style="font-size:12.5px;line-height:1.75;color:var(--text-dark);white-space:pre-wrap;">${parsed.body}</div>
+      </div>
+      <button onclick="copyText('Subject: ${(parsed.subject||'').replace(/'/g,"\\'")}\\n\\n${(parsed.body||'').replace(/'/g,"\\'").replace(/\n/g,'\\n')}','Email copied')" class="btn btn-secondary" style="width:100%;font-size:12px;">📋 Copy Email</button>
+    </div>`;
+  } catch(err) { panel.innerHTML = `<div style="font-size:12px;color:var(--red);">Error: ${err.message}</div>`; }
+}
+
+function copyText(text, msg) {
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(()=>showToast(msg||'Copied')).catch(()=>fallbackCopy(text,msg)); }
+  else fallbackCopy(text, msg);
+}
+function fallbackCopy(text, msg) {
+  const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(msg||'Copied');
 }
 
 // ── UTILS ──
