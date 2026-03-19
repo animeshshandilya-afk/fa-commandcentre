@@ -1061,7 +1061,10 @@
         <div style="display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;">
           <div style="position:sticky;top:80px;">
             <div class="card" style="padding:14px;">
-              <div class="card-title" style="font-size:13px;margin-bottom:10px;">Active Projects</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div class="card-title" style="font-size:13px;margin:0;">Active Projects</div>
+                <button onclick="refreshObManage()" style="padding:4px 10px;border:1px solid var(--border);background:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--text-mid);">↻</button>
+              </div>
               <div id="ob-manage-list"><div style="font-size:12px;color:var(--text-light);">No projects yet</div></div>
             </div>
           </div>
@@ -2460,20 +2463,19 @@ function switchObTab(tab) {
   });
   if (tab === 'dashboard') renderObDashboard();
   if (tab === 'manage') {
-    renderObManageList();
-    // Auto-select first active project if none selected
-    if (!selectedObToken) {
+    fetchCentralData().then(() => {
+      renderObManageList();
       const obs = (centralData.onboardings || []).filter(o => o['Status'] !== 'Completed');
       const role = getUserRole(); const u = getCurrentUser();
       const visible = role === 'csm' ? obs.filter(o => (o['CSM']||o.csm) === u) : obs;
-      if (visible.length) {
+      if (!selectedObToken && visible.length) {
         selectedObToken = visible[0]['Token'] || visible[0].token;
+      }
+      if (selectedObToken) {
         renderObManageList();
         renderObStagePanel();
       }
-    } else {
-      renderObStagePanel();
-    }
+    });
   }
   if (tab === 'history') renderObHistory();
 }
@@ -2783,12 +2785,26 @@ function renderObStagePanel() {
   const ob = (centralData.onboardings || []).find(o => (o['Token'] || o.token) === selectedObToken);
   if (!ob) return;
   const stages = safeParseStages(ob['Stages'] || ob.stages);
+  const panel = document.getElementById('ob-stage-panel');
+
+  // If stages empty/corrupted, show helpful message
+  if (!stages || !stages.length) {
+    panel.innerHTML = `<div class="card" style="text-align:center;padding:40px;">
+      <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+      <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:8px;">Stage data not found</div>
+      <div style="font-size:12px;color:var(--text-mid);line-height:1.6;max-width:400px;margin:0 auto;">
+        This project may have been created before the latest update. Please delete it from the
+        <strong>Onboarding_Tracker</strong> sheet and create it again — it will work correctly.
+      </div>
+    </div>`;
+    return;
+  }
+
   const pct = calcProjectPct(stages);
   const rag = calcProjectRag(stages);
   const rc = OB_RAG[rag] || OB_RAG.pending;
   const isDone = ob['Status'] === 'Completed' || pct === 100;
   const golive = ob['Target Go-Live'] || ob.goliveTarget || '—';
-  const panel = document.getElementById('ob-stage-panel');
 
   panel.innerHTML = `
     <div class="card" style="margin-bottom:16px;">
@@ -3024,6 +3040,22 @@ function copyText(text, msg) {
 }
 function fallbackCopy(text, msg) {
   const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(msg||'Copied');
+}
+
+function refreshObManage() {
+  selectedObToken = null;
+  fetchCentralData().then(() => {
+    renderObManageList();
+    const obs = (centralData.onboardings || []).filter(o => o['Status'] !== 'Completed');
+    const role = getUserRole(); const u = getCurrentUser();
+    const visible = role === 'csm' ? obs.filter(o => (o['CSM']||o.csm) === u) : obs;
+    if (visible.length) {
+      selectedObToken = visible[0]['Token'] || visible[0].token;
+      renderObManageList();
+      renderObStagePanel();
+    }
+    showToast('Projects refreshed');
+  });
 }
 
 // ── UTILS ──
