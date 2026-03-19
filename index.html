@@ -2465,16 +2465,8 @@ function switchObTab(tab) {
   if (tab === 'manage') {
     fetchCentralData().then(() => {
       renderObManageList();
-      const obs = (centralData.onboardings || []).filter(o => o['Status'] !== 'Completed');
-      const role = getUserRole(); const u = getCurrentUser();
-      const visible = role === 'csm' ? obs.filter(o => (o['CSM']||o.csm) === u) : obs;
-      if (!selectedObToken && visible.length) {
-        selectedObToken = visible[0]['Token'] || visible[0].token;
-      }
-      if (selectedObToken) {
-        renderObManageList();
-        renderObStagePanel();
-      }
+      // If a project was already selected, re-render its stage panel
+      if (selectedObToken) renderObStagePanel();
     });
   }
   if (tab === 'history') renderObHistory();
@@ -2776,9 +2768,20 @@ function renderObManageList() {
 
 function selectOb(token) {
   selectedObToken = token;
+  // Switch to manage tab visually if not already there
+  ['dashboard','new','manage','history'].forEach(t => {
+    const view = document.getElementById('ob-view-' + t);
+    const btn = document.getElementById('ob-tab-' + t);
+    if (view) view.style.display = t === 'manage' ? 'block' : 'none';
+    if (btn) {
+      btn.style.color = t === 'manage' ? 'var(--navy)' : 'var(--text-mid)';
+      btn.style.fontWeight = t === 'manage' ? '600' : '500';
+      btn.style.borderBottom = t === 'manage' ? '3px solid var(--navy)' : '3px solid transparent';
+    }
+  });
+  // Render immediately with existing centralData — no async fetch
   renderObManageList();
   renderObStagePanel();
-  switchObTab('manage');
 }
 
 function renderObStagePanel() {
@@ -3043,17 +3046,9 @@ function fallbackCopy(text, msg) {
 }
 
 function refreshObManage() {
-  selectedObToken = null;
   fetchCentralData().then(() => {
     renderObManageList();
-    const obs = (centralData.onboardings || []).filter(o => o['Status'] !== 'Completed');
-    const role = getUserRole(); const u = getCurrentUser();
-    const visible = role === 'csm' ? obs.filter(o => (o['CSM']||o.csm) === u) : obs;
-    if (visible.length) {
-      selectedObToken = visible[0]['Token'] || visible[0].token;
-      renderObManageList();
-      renderObStagePanel();
-    }
+    if (selectedObToken) renderObStagePanel();
     showToast('Projects refreshed');
   });
 }
