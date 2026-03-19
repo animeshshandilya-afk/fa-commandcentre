@@ -2437,7 +2437,22 @@ function switchObTab(tab) {
     }
   });
   if (tab === 'dashboard') renderObDashboard();
-  if (tab === 'manage') renderObManageList();
+  if (tab === 'manage') {
+    renderObManageList();
+    // Auto-select first active project if none selected
+    if (!selectedObToken) {
+      const obs = (centralData.onboardings || []).filter(o => o['Status'] !== 'Completed');
+      const role = getUserRole(); const u = getCurrentUser();
+      const visible = role === 'csm' ? obs.filter(o => (o['CSM']||o.csm) === u) : obs;
+      if (visible.length) {
+        selectedObToken = visible[0]['Token'] || visible[0].token;
+        renderObManageList();
+        renderObStagePanel();
+      }
+    } else {
+      renderObStagePanel();
+    }
+  }
   if (tab === 'history') renderObHistory();
 }
 
@@ -2450,6 +2465,9 @@ function loadOnboarding() {
   // Default start date to today
   const sd = document.getElementById('ob-start-date');
   if (sd && !sd.value) sd.value = new Date().toISOString().split('T')[0];
+  // Auto-generate a unique 4-digit PIN
+  const pinEl = document.getElementById('ob-pin');
+  if (pinEl && !pinEl.value) pinEl.value = Math.floor(1000 + Math.random() * 9000);
   renderObDashboard();
 }
 
@@ -2573,8 +2591,25 @@ async function createOnboarding() {
     await syncToSheets(data);
 
     // Small delay to allow Apps Script to write before reading back
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     await fetchCentralData();
+
+    // If centralData still doesn't have this onboarding (sheet read lag),
+    // inject it locally so the UI updates immediately
+    if (!(centralData.onboardings || []).find(o => (o['Token']||o.token) === token)) {
+      if (!centralData.onboardings) centralData.onboardings = [];
+      centralData.onboardings.push({
+        'Token': token, 'Account Token': accountToken,
+        'Account Name': account, 'Project Name': projectName,
+        'Module': module, 'Add-On Modules': addons.join(', '),
+        'Start Date': startDate, 'Target Go-Live': golive,
+        'CSM': csm, 'AM': am, 'PIN': pin,
+        'Client Lead': clientLead, 'Exec Sponsor': execSponsor,
+        'Notes': notes, 'Status': 'Active',
+        'Created By': getCurrentUser(),
+        'Stages': JSON.stringify(obStagesBuilder)
+      });
+    }
 
     const base = 'https://animeshshandilya-afk.github.io/fa-onboarding/';
     document.getElementById('ob-generated-url').value = base + '?token=' + token;
@@ -2582,6 +2617,9 @@ async function createOnboarding() {
     document.getElementById('ob-created-pin').textContent = pin;
     document.getElementById('ob-created-success').style.display = 'block';
     showToast('✅ Project created — ' + projectName);
+    // Regenerate PIN for next project
+    const nextPin = document.getElementById('ob-pin');
+    if (nextPin) nextPin.value = Math.floor(1000 + Math.random() * 9000);
 
   } catch(err) {
     console.error('createOnboarding error:', err);
