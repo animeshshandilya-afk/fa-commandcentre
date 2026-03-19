@@ -2547,35 +2547,48 @@ async function createOnboarding() {
   if (!golive) { showToast('Please set a target end date'); return; }
   if (!csm) { showToast('Please assign a CSM'); return; }
   if (!pin || String(pin).length < 4) { showToast('Please set a 4-digit PIN'); return; }
-  if (!obStagesBuilder.length) { showToast('Please select a module to load stages'); return; }
+  if (!obStagesBuilder.length) { showToast('Please select a module — stages must load first'); return; }
 
-  const addons = Array.from(document.querySelectorAll('.ob-addon-cb:checked')).map(cb => cb.value);
+  // Show loading state on button
+  const btn = document.querySelector('#ob-view-new .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Creating project...'; }
 
-  const token = generateToken();
-  // Account token = hash of account name for consistent URL across projects
-  const accountToken = btoa(account).replace(/[^a-zA-Z0-9]/g,'').substring(0,16);
+  try {
+    const addons = Array.from(document.querySelectorAll('.ob-addon-cb:checked')).map(cb => cb.value);
+    const token = generateToken();
+    const accountToken = btoa(encodeURIComponent(account)).replace(/[^a-zA-Z0-9]/g,'').substring(0,16);
 
-  const data = {
-    type: 'onboarding',
-    timestamp: new Date().toISOString(),
-    token, accountToken, account, projectName, module,
-    addons: addons.join(', '),
-    startDate, goliveTarget: golive, csm, am, pin,
-    clientLead, execSponsor, notes,
-    stages: JSON.stringify(obStagesBuilder),
-    status: 'Active',
-    createdBy: getCurrentUser()
-  };
+    const data = {
+      type: 'onboarding',
+      timestamp: new Date().toISOString(),
+      token, accountToken, account, projectName, module,
+      addons: addons.join(', '),
+      startDate, goliveTarget: golive, csm, am, pin,
+      clientLead, execSponsor, notes,
+      stages: JSON.stringify(obStagesBuilder),
+      status: 'Active',
+      createdBy: getCurrentUser()
+    };
 
-  await syncToSheets(data);
-  await fetchCentralData();
+    await syncToSheets(data);
 
-  const base = 'https://animeshshandilya-afk.github.io/fa-onboarding/';
-  document.getElementById('ob-generated-url').value = base + '?token=' + token;
-  document.getElementById('ob-account-url').value = base + '?account=' + accountToken + '&pin=' + pin;
-  document.getElementById('ob-created-pin').textContent = pin;
-  document.getElementById('ob-created-success').style.display = 'block';
-  showToast('Project created — ' + projectName);
+    // Small delay to allow Apps Script to write before reading back
+    await new Promise(r => setTimeout(r, 1500));
+    await fetchCentralData();
+
+    const base = 'https://animeshshandilya-afk.github.io/fa-onboarding/';
+    document.getElementById('ob-generated-url').value = base + '?token=' + token;
+    document.getElementById('ob-account-url').value = base + '?account=' + accountToken + '&pin=' + pin;
+    document.getElementById('ob-created-pin').textContent = pin;
+    document.getElementById('ob-created-success').style.display = 'block';
+    showToast('✅ Project created — ' + projectName);
+
+  } catch(err) {
+    console.error('createOnboarding error:', err);
+    showToast('Error creating project: ' + (err.message || 'Please try again'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🚀 Create Project & Generate Link'; }
+  }
 }
 
 // ── Dashboard ──
