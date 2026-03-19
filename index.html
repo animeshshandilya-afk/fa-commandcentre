@@ -2538,13 +2538,19 @@ function renderObStagesBuilder() {
         ${!s.is_mandatory ? `<button onclick="obStagesBuilder.splice(${i},1);renderObStagesBuilder()"
           style="padding:3px 7px;border:1px solid var(--border);background:none;color:var(--text-light);border-radius:5px;font-size:12px;cursor:pointer;">×</button>` : ''}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
         <div><label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Planned End Date</label>
           <input type="date" value="${s.planned_end}" onchange="obStagesBuilder[${i}].planned_end=this.value"
             style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;margin-top:3px;"></div>
         <div><label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Actual End Date</label>
           <input type="date" value="${s.actual_end}" onchange="obStagesBuilder[${i}].actual_end=this.value"
             style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;margin-top:3px;"></div>
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Remark (visible to client)</label>
+        <input type="text" value="${s.remark||''}" onchange="obStagesBuilder[${i}].remark=this.value"
+          placeholder="Optional note visible to the client on their tracker..."
+          style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;margin-top:3px;">
       </div>
     </div>`).join('');
 }
@@ -2839,7 +2845,7 @@ function renderObStagePanel() {
             </div>
             <span style="font-size:10px;font-weight:600;padding:2px 10px;background:${sc.bg};color:${sc.color};border-radius:10px;border:1px solid ${sc.color}40;">${sc.label}</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end;margin-bottom:8px;">
             <div><label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Planned End</label>
               <input type="date" value="${s.planned_end||''}" id="ob-pe-${i}"
                 style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;margin-top:3px;"></div>
@@ -2852,6 +2858,12 @@ function renderObStagePanel() {
                 ${s.is_na?'Restore':'N/A'}</button>` : '<div style="flex:1;"></div>'}
               <button onclick="saveObStage(${i})" class="btn btn-secondary" style="flex:1;font-size:11px;padding:7px 8px;">Save</button>
             </div>
+          </div>
+          <div>
+            <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);">Remark (visible to client)</label>
+            <input type="text" id="ob-rem-${i}" value="${s.remark||''}"
+              placeholder="Add a note for the client — status context, blockers, next steps..."
+              style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;margin-top:3px;">
           </div>
         </div>`;
       }).join('')}
@@ -2877,7 +2889,8 @@ async function saveObStage(stageIdx) {
   if (!ob) return;
   const stages = safeParseStages(ob['Stages'] || ob.stages);
   stages[stageIdx].planned_end = document.getElementById('ob-pe-' + stageIdx)?.value || '';
-  stages[stageIdx].actual_end = document.getElementById('ob-ae-' + stageIdx)?.value || '';
+  stages[stageIdx].actual_end  = document.getElementById('ob-ae-' + stageIdx)?.value || '';
+  stages[stageIdx].remark      = document.getElementById('ob-rem-' + stageIdx)?.value || '';
   saveObStageDirect(stages);
 }
 
