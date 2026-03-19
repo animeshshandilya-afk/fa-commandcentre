@@ -12,34 +12,34 @@
     --navy:#0D1B2A;--navy-light:#152336;--gold:#E8A838;--gold-light:#F5C46A;--gold-muted:rgba(232,168,56,0.15);
     --off-white:#F6F5F1;--text-dark:#1A1A2E;--text-mid:#4A5568;--text-light:#9AA5B4;
     --green:#27AE60;--amber:#F39C12;--red:#E74C3C;--border:#E2E8F0;
-    --card-shadow:0 2px 12px rgba(0,0,0,0.06);--sidebar-w:240px;
+    --card-shadow:0 2px 12px rgba(0,0,0,0.06);--sidebar-w:200px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text-dark);min-height:100vh;display:flex;}
   #sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100;overflow-y:auto;}
-  .sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,0.07);}
+  .sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.07);}
   .sidebar-logo .logo-tag{font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);}
   .sidebar-logo .logo-sub{font-size:10px;color:var(--text-light);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
   .sidebar-user{padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.07);}
   .sidebar-user select{width:100%;background:var(--navy-light);border:1px solid rgba(255,255,255,0.1);color:white;padding:8px 10px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;outline:none;}
   .sidebar-user label{font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;}
   nav{padding:16px 0;flex:1;}
-  .nav-section{padding:6px 24px 4px;font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:.1em;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;cursor:pointer;color:rgba(255,255,255,0.6);font-size:13px;font-weight:500;transition:all .15s;border-left:3px solid transparent;margin:1px 0;}
+  .nav-section{padding:10px 16px 3px;font-size:9px;color:var(--text-light);text-transform:uppercase;letter-spacing:.1em;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:7px 16px;cursor:pointer;color:rgba(255,255,255,0.6);font-size:12px;font-weight:500;transition:all .15s;border-left:3px solid transparent;margin:1px 0;}
   .nav-item:hover{color:white;background:rgba(255,255,255,0.04);}
   .nav-item.active{color:var(--gold);border-left-color:var(--gold);background:var(--gold-muted);}
   .sidebar-status{padding:16px 24px;border-top:1px solid rgba(255,255,255,0.07);}
   .sync-status{font-size:11px;margin-top:4px;}
   .sync-status.connected{color:var(--green);}.sync-status.syncing{color:var(--gold);}.sync-status.error{color:var(--red);}
   #main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;}
-  .page-header{background:white;padding:24px 36px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .page-header{background:white;padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
   .page-header h1{font-family:'DM Serif Display',serif;font-size:22px;}
   .page-header p{font-size:13px;color:var(--text-mid);margin-top:2px;}
   .page-header-actions{display:flex;gap:10px;align-items:center;}
-  .page-content{padding:32px 36px;}
-  .card{background:white;border-radius:12px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border);margin-bottom:20px;}
+  .page-content{padding:24px 28px;}
+  .card{background:white;border-radius:12px;padding:20px;box-shadow:var(--card-shadow);border:1px solid var(--border);margin-bottom:16px;}
   .card-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:16px;}
-  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
   .stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;}
   .stats-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px;}
   .stat-card{background:white;border-radius:12px;padding:20px;box-shadow:var(--card-shadow);border:1px solid var(--border);transition:all .2s;}
@@ -78,7 +78,7 @@
   .warning-reason{font-size:12px;color:var(--text-mid);margin-top:2px;}
   .warning-badge{margin-left:auto;flex-shrink:0;}
   /* FORMS */
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .form-grid.three{grid-template-columns:1fr 1fr 1fr;}
   .form-full{grid-column:1/-1;}
   .field{display:flex;flex-direction:column;gap:6px;}
@@ -168,7 +168,7 @@
   .on-track{color:var(--green);font-weight:600;font-size:12px;}
   .conditional-field{display:none;}
   .conditional-field.visible{display:flex;}
-  .section-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .section-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
   .empty-state{text-align:center;padding:48px 24px;color:var(--text-light);}
   .empty-state .icon{font-size:40px;margin-bottom:12px;}
   .empty-state p{font-size:13px;}
@@ -930,7 +930,7 @@
                 <div class="field"><label>Project Name * <span style="font-weight:400;color:var(--text-light);">(e.g. "SFA 2.0 Rollout" or "DMS Phase 1")</span></label>
                   <input type="text" id="ob-project-name" placeholder="Give this onboarding project a clear name...">
                 </div>
-                <div class="field"><label>Module(s) *</label>
+                <div class="field"><label>Primary Module * <span style="font-weight:400;color:var(--text-light);font-size:11px;">(drives the stage template)</span></label>
                   <select id="ob-module" onchange="loadModuleStages()">
                     <option value="">— Select primary module —</option>
                     <option value="SFA 2.0">SFA 2.0</option>
@@ -944,6 +944,28 @@
                     <option value="MT Module">MT Module</option>
                     <option value="Custom">Custom / Multi-module</option>
                   </select>
+                </div>
+
+                <div class="field" id="ob-addons-wrap" style="display:none;">
+                  <label>Add-On Modules <span style="font-weight:400;color:var(--text-light);font-size:11px;">(optional — included in project record)</span></label>
+                  <div style="display:flex;flex-wrap:wrap;gap:7px;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--off-white);">
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="SFA 2.0" class="ob-addon-cb"> SFA 2.0</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="DMS" class="ob-addon-cb"> DMS</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Attendance Modules" class="ob-addon-cb"> Attendance Modules</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Modern Trade" class="ob-addon-cb"> Modern Trade</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Van Sales" class="ob-addon-cb"> Van Sales</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Expense Management System" class="ob-addon-cb"> Expense Management System</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="KPI Based Beat-O-Meter" class="ob-addon-cb"> KPI Based Beat-O-Meter</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Gamification" class="ob-addon-cb"> Gamification</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Incentives" class="ob-addon-cb"> Incentives</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="FA Engage" class="ob-addon-cb"> FA Engage</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="FA Pulse" class="ob-addon-cb"> FA Pulse</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Analytics Studio" class="ob-addon-cb"> Analytics Studio</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Power BI" class="ob-addon-cb"> Power BI</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="FA One" class="ob-addon-cb"> FA One</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Retailer App" class="ob-addon-cb"> Retailer App</label>
+                    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;background:white;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="Loyalty" class="ob-addon-cb"> Loyalty</label>
+                  </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                   <div class="field"><label>Project Start Date *</label><input type="date" id="ob-start-date"></div>
@@ -2434,6 +2456,17 @@ function loadOnboarding() {
 // ── Stage builder ──
 function loadModuleStages() {
   const module = document.getElementById('ob-module').value;
+  // Show/hide add-ons panel and filter out primary from addon list
+  const addonsWrap = document.getElementById('ob-addons-wrap');
+  if (addonsWrap) {
+    addonsWrap.style.display = module ? 'block' : 'none';
+    // Uncheck and hide the primary module from addon list
+    document.querySelectorAll('.ob-addon-cb').forEach(cb => {
+      const lbl = cb.closest('label');
+      if (cb.value === module) { cb.checked = false; if(lbl) lbl.style.display = 'none'; }
+      else { if(lbl) lbl.style.display = 'flex'; }
+    });
+  }
   if (!module) { obStagesBuilder = []; renderObStagesBuilder(); return; }
   const template = OB_MODULE_STAGES[module] || OB_MODULE_STAGES['Custom'];
   obStagesBuilder = template.map((s,i) => ({
@@ -2516,6 +2549,8 @@ async function createOnboarding() {
   if (!pin || String(pin).length < 4) { showToast('Please set a 4-digit PIN'); return; }
   if (!obStagesBuilder.length) { showToast('Please select a module to load stages'); return; }
 
+  const addons = Array.from(document.querySelectorAll('.ob-addon-cb:checked')).map(cb => cb.value);
+
   const token = generateToken();
   // Account token = hash of account name for consistent URL across projects
   const accountToken = btoa(account).replace(/[^a-zA-Z0-9]/g,'').substring(0,16);
@@ -2524,6 +2559,7 @@ async function createOnboarding() {
     type: 'onboarding',
     timestamp: new Date().toISOString(),
     token, accountToken, account, projectName, module,
+    addons: addons.join(', '),
     startDate, goliveTarget: golive, csm, am, pin,
     clientLead, execSponsor, notes,
     stages: JSON.stringify(obStagesBuilder),
@@ -2686,7 +2722,7 @@ function renderObStagePanel() {
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
         <div>
           <div style="font-size:18px;font-weight:700;color:var(--navy);">${ob['Project Name'] || ob.projectName || ob['Account Name'] || ob.account}</div>
-          <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${ob['Account Name'] || ob.account} · ${ob['Module'] || ob.module} · Target: ${golive}</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${ob['Account Name'] || ob.account} · ${ob['Module'] || ob.module}${(ob['Add-On Modules']||ob.addons)?' + '+(ob['Add-On Modules']||ob.addons):''} · Target: ${golive}</div>
         </div>
         <div style="text-align:center;">
           <div style="font-size:28px;font-weight:700;color:${rc.color};">${pct}%</div>
