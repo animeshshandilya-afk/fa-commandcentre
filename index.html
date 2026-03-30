@@ -617,7 +617,38 @@
 <option value="2029">2029</option>
             </select></div>
           <div class="field"><label>Billed?</label><select id="gr-billed"><option value="No">No</option><option value="Yes">Yes</option></select></div>
-          <div class="field conditional-field" id="gr-billing-wrap" style="display:none;"><label>Actual Billing Month *</label><input type="month" id="gr-billing-month"></div>
+          <!-- Won Details Panel -->
+          <div class="conditional-field form-full" id="gr-won-wrap" style="display:none;background:#EAFAF1;border:1px solid #86EFAC;border-radius:10px;padding:14px;margin-top:4px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:10px;">✓ Won — Realisation Details</div>
+            <div class="form-grid">
+              <div class="field"><label>Actual Realised MRR (₹) *</label><input type="number" id="gr-realised-mrr" placeholder="Actual MRR realised"></div>
+              <div class="field"><label>Realisation Month *</label>
+                <select id="gr-real-month">
+                  <option value="">— Month —</option>
+                  <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+                  <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+                  <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+                  <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                </select></div>
+              <div class="field"><label>Realisation Year *</label>
+                <select id="gr-real-year">
+                  <option value="">— Year —</option>
+                  <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+                  <option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option>
+                </select></div>
+              <div class="field conditional-field" id="gr-won-delay-wrap" style="display:none;">
+                <label>Delay Reason * <span style="font-weight:400;color:var(--amber);">(Realisation after planned close)</span></label>
+                <select id="gr-won-delay-reason">
+                  <option value="">— Select reason —</option>
+                  <option value="Product Delay">Product Delay</option>
+                  <option value="Tech Instability">Tech Instability</option>
+                  <option value="Tech Delay">Tech Delay</option>
+                  <option value="Client Delay">Client Delay</option>
+                  <option value="Execution Delay">Execution Delay</option>
+                  <option value="Pilot Delayed">Pilot Delayed</option>
+                </select></div>
+            </div>
+          </div>
           <div class="field conditional-field" id="gr-delay-reason-wrap" style="display:none;"><label>Delay Reason *</label>
             <select id="gr-delay-reason">
               <option value="">— Select reason —</option>
@@ -639,7 +670,7 @@
         </div>
         <div class="field" style="margin-top:20px;"><label>Remarks</label><textarea id="gr-remarks"></textarea></div>
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" onclick="document.getElementById('growthForm').reset();MS_SELECTIONS.product=[];renderMsTags('product');toggleBillingMonth('gr-billing-wrap','')">Clear</button>
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('growthForm').reset();MS_SELECTIONS.product=[];renderMsTags('product');['gr-won-wrap','gr-delay-reason-wrap','gr-lost-reason-wrap','gr-won-delay-wrap'].forEach(id=>document.getElementById(id).style.display='none')">Clear</button>
           <button type="submit" class="btn btn-primary">Save Opportunity →</button>
         </div>
       </form>
@@ -1532,9 +1563,26 @@ async function submitGrowth(e){
   if(!mrr){showToast('Potential MRR is mandatory');return;}
   if(stage==='Delayed Closure'&&!delayReason){showToast('Please select a Delay Reason');return;}
   if(stage==='Closed Lost'&&!lostReason){showToast('Please select a Lost Reason');return;}
-  if(stage==='Closed Won'&&!g('gr-billing-month')){showToast('Please enter Actual Billing Month');return;}
+  if(stage==='Closed Won'){
+    if(!g('gr-realised-mrr')){showToast('Please enter Actual Realised MRR');return;}
+    if(!g('gr-real-month')||!g('gr-real-year')){showToast('Please select Realisation Month and Year');return;}
+  }
 
   const closeDate=closeYear+'-'+closeMonth;
+
+  // Determine MRR status for Won entries
+  let mrrStatus='';let wonDelayReason='';
+  if(stage==='Closed Won'){
+    const realisationDate=g('gr-real-year')+'-'+g('gr-real-month');
+    if(realisationDate>closeDate){
+      mrrStatus='Delayed MRR';
+      wonDelayReason=g('gr-won-delay-reason');
+      if(!wonDelayReason){showToast('Please select a Delay Reason');return;}
+    } else {
+      mrrStatus='On Time';
+    }
+  }
+
   await syncToSheets({
     type:'growth_pipeline',
     timestamp:new Date().toISOString(),
@@ -1543,18 +1591,22 @@ async function submitGrowth(e){
     products:MS_SELECTIONS.product.join(', '),
     potentialMrr:mrr,oneTime:g('gr-onetime'),
     stage,closeDate,
-    billingMonth:g('gr-billing-month'),
+    billingMonth:stage==='Closed Won'?(g('gr-real-year')+'-'+g('gr-real-month')):'',
     billed:g('gr-billed'),
     remarks:g('gr-remarks'),
-    delayReason:stage==='Delayed Closure'?delayReason:'',
-    lostReason:stage==='Closed Lost'?lostReason:''
+    delayReason:stage==='Delayed Closure'?delayReason:(stage==='Closed Won'?wonDelayReason:''),
+    lostReason:stage==='Closed Lost'?lostReason:'',
+    realisedMrr:stage==='Closed Won'?g('gr-realised-mrr'):'',
+    realisationDate:stage==='Closed Won'?(g('gr-real-year')+'-'+g('gr-real-month')):'',
+    mrrStatus
   });
   showToast('Opportunity saved');
   document.getElementById('growthForm').reset();
   MS_SELECTIONS.product=[];renderMsTags('product');
   document.getElementById('gr-delay-reason-wrap').style.display='none';
   document.getElementById('gr-lost-reason-wrap').style.display='none';
-  document.getElementById('gr-billing-wrap').style.display='none';
+  document.getElementById('gr-won-wrap').style.display='none';
+  document.getElementById('gr-won-delay-wrap').style.display='none';
 }
 
 // ── EDIT ACCOUNT ──
@@ -3405,12 +3457,29 @@ function refreshObManage() {
 
 // ── PIPELINE STAGE CONDITIONAL UI ──
 function onGrStageChange(stage){
-  document.getElementById('gr-billing-wrap').style.display=stage==='Closed Won'?'block':'none';
+  document.getElementById('gr-won-wrap').style.display=stage==='Closed Won'?'block':'none';
   document.getElementById('gr-delay-reason-wrap').style.display=stage==='Delayed Closure'?'block':'none';
   document.getElementById('gr-lost-reason-wrap').style.display=stage==='Closed Lost'?'block':'none';
-  // Reset conditionals
+  // Reset conditionals when stage changes away
+  if(stage!=='Closed Won'){
+    ['gr-realised-mrr','gr-real-month','gr-real-year','gr-won-delay-reason'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('gr-won-delay-wrap').style.display='none';
+  }
   if(stage!=='Delayed Closure') document.getElementById('gr-delay-reason').value='';
   if(stage!=='Closed Lost') document.getElementById('gr-lost-reason').value='';
+}
+
+function checkGrWonDelay(){
+  const closeMonth=document.getElementById('gr-close-month').value;
+  const closeYear=document.getElementById('gr-close-year').value;
+  const realMonth=document.getElementById('gr-real-month').value;
+  const realYear=document.getElementById('gr-real-year').value;
+  if(!closeMonth||!closeYear||!realMonth||!realYear) return;
+  const planned=closeYear+'-'+closeMonth;
+  const actual=realYear+'-'+realMonth;
+  const wrap=document.getElementById('gr-won-delay-wrap');
+  if(wrap) wrap.style.display=actual>planned?'block':'none';
+  if(actual<=planned){const el=document.getElementById('gr-won-delay-reason');if(el)el.value='';}
 }
 
 function onEditStageChange(stage){
@@ -3438,6 +3507,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   ['edit-real-month','edit-real-year'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.addEventListener('change',checkEditWonDelay);
+  });
+  ['gr-real-month','gr-real-year'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('change',checkGrWonDelay);
   });
 });
 
