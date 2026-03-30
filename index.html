@@ -329,6 +329,9 @@
       <div class="stats-grid" style="margin-bottom:28px;">
         <div class="stat-card green clickable" onclick="navToPage('growth-dive')"><div class="card-label">Pipeline MRR</div><div class="card-value" id="stat-pipeline">—</div><div class="card-sub">Open opportunities</div><div class="card-drill">Growth deep dive →</div></div>
         <div class="stat-card teal clickable" onclick="navToPage('growth-dive')"><div class="card-label">Closed Won MRR</div><div class="card-value" id="stat-won-mrr">—</div><div class="card-sub">Converted this cycle</div><div class="card-drill">View pipeline →</div></div>
+        <div class="stat-card red clickable" onclick="showDelayedMrrDrilldown('delayed_won')"><div class="card-label">Delayed Won MRR</div><div class="card-value" id="stat-delayed-won-mrr">—</div><div class="card-sub">Won but realised late</div><div class="card-drill">Reason breakdown →</div></div>
+        <div class="stat-card amber clickable" onclick="showDelayedMrrDrilldown('delayed_closure')"><div class="card-label">Delayed Closure MRR</div><div class="card-value" id="stat-delayed-closure-mrr">—</div><div class="card-sub">Pipeline stuck</div><div class="card-drill">Reason breakdown →</div></div>
+        <div class="stat-card red clickable" onclick="showDelayedMrrDrilldown('lost')"><div class="card-label">Lost MRR</div><div class="card-value" id="stat-lost-mrr">—</div><div class="card-sub">Closed Lost</div><div class="card-drill">Reason breakdown →</div></div>
         <div class="stat-card amber clickable" onclick="navToPage('benchmarks')"><div class="card-label">Avg SKAM Score</div><div class="card-value" id="stat-skam">—</div><div class="card-sub">Across reviewed accounts</div><div class="card-drill">View benchmarks →</div></div>
         <div class="stat-card red clickable" onclick="navToPage('pipeline-list')"><div class="card-label">Stale Pipeline</div><div class="card-value" id="stat-stale">—</div><div class="card-sub">30+ days no update</div><div class="card-drill">View pipeline →</div></div>
       </div>
@@ -483,6 +486,15 @@
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('accountMasterForm').reset()">Clear</button>
           <button type="submit" class="btn btn-primary">Save Account →</button>
         </div>
+        <div id="am-save-confirmation" style="display:none;margin-top:16px;background:#EAFAF1;border:1px solid #86EFAC;border-radius:10px;padding:14px 16px;display:none;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;background:#4BA428;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✓</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:#1E8449;" id="am-save-name"></div>
+              <div style="font-size:12px;color:#27AE60;margin-top:1px;">Account saved successfully and synced to the sheet</div>
+            </div>
+          </div>
+        </div>
       </form>
     </div></div>
   </div>
@@ -571,10 +583,59 @@
         </div>
         <div class="section-label">Stage & Timeline</div>
         <div class="form-grid">
-          <div class="field"><label>Stage *</label><select id="gr-stage" required onchange="toggleBillingMonth('gr-billing-wrap',this.value)"><option value="">—</option><option>Identified</option><option>Qualified</option><option>Demo Done</option><option>Proposal Sent</option><option>Closed Won</option><option>Closed Lost</option></select></div>
-          <div class="field"><label>Expected Close</label><input type="month" id="gr-close-date"></div>
-          <div class="field conditional-field" id="gr-billing-wrap"><label>Actual Billing Month *</label><input type="month" id="gr-billing-month"></div>
+          <div class="field"><label>Stage *</label>
+            <select id="gr-stage" required onchange="onGrStageChange(this.value)">
+              <option value="">—</option>
+              <option>Identified</option><option>Qualified</option><option>Demo Done</option>
+              <option>Proposal Sent</option><option>Closed Won</option>
+              <option>Delayed Closure</option><option>Closed Lost</option>
+            </select></div>
+          <div class="field"><label>Expected Close Month *</label>
+            <select id="gr-close-month" required>
+              <option value="">— Month —</option>
+              <option value="01">January</option>
+<option value="02">February</option>
+<option value="03">March</option>
+<option value="04">April</option>
+<option value="05">May</option>
+<option value="06">June</option>
+<option value="07">July</option>
+<option value="08">August</option>
+<option value="09">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
+            </select></div>
+          <div class="field"><label>Expected Close Year *</label>
+            <select id="gr-close-year" required>
+              <option value="">— Year —</option>
+              <option value="2024">2024</option>
+<option value="2025">2025</option>
+<option value="2026">2026</option>
+<option value="2027">2027</option>
+<option value="2028">2028</option>
+<option value="2029">2029</option>
+            </select></div>
           <div class="field"><label>Billed?</label><select id="gr-billed"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+          <div class="field conditional-field" id="gr-billing-wrap" style="display:none;"><label>Actual Billing Month *</label><input type="month" id="gr-billing-month"></div>
+          <div class="field conditional-field" id="gr-delay-reason-wrap" style="display:none;"><label>Delay Reason *</label>
+            <select id="gr-delay-reason">
+              <option value="">— Select reason —</option>
+              <option value="Product Delay">Product Delay</option>
+<option value="Tech Instability">Tech Instability</option>
+<option value="Tech Delay">Tech Delay</option>
+<option value="Client Delay">Client Delay</option>
+<option value="Execution Delay">Execution Delay</option>
+<option value="Pilot Delayed">Pilot Delayed</option>
+            </select></div>
+          <div class="field conditional-field" id="gr-lost-reason-wrap" style="display:none;"><label>Lost Reason *</label>
+            <select id="gr-lost-reason">
+              <option value="">— Select reason —</option>
+              <option value="Commercial Issues">Commercial Issues</option>
+<option value="Client Expectation not Matched">Client Expectation not Matched</option>
+<option value="Product Not Stable">Product Not Stable</option>
+<option value="Delay in developments">Delay in developments</option>
+            </select></div>
         </div>
         <div class="field" style="margin-top:20px;"><label>Remarks</label><textarea id="gr-remarks"></textarea></div>
         <div class="form-actions">
@@ -1137,21 +1198,155 @@
 
 <!-- EDIT PIPELINE MODAL -->
 <div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;" id="editPipelineModal">
-  <div style="background:white;border-radius:16px;padding:32px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
-    <h2 style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:20px;">Edit Pipeline Entry</h2>
+  <div style="background:white;border-radius:16px;padding:28px;width:680px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+    <h2 style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:6px;">Edit Pipeline Entry</h2>
+    <div style="font-size:12px;color:var(--text-mid);margin-bottom:20px;" id="edit-entry-label"></div>
     <input type="hidden" id="edit-row-index">
+
+    <div style="background:var(--off-white);border-radius:10px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:10px;">Original Entry Details</div>
+      <div class="form-grid">
+        <div class="field"><label>Account</label><input type="text" id="edit-view-account" readonly style="background:var(--off-white);"></div>
+        <div class="field"><label>Account Manager</label><input type="text" id="edit-view-am" readonly style="background:var(--off-white);"></div>
+        <div class="field"><label>Opportunity Type</label><input type="text" id="edit-view-type" readonly style="background:var(--off-white);"></div>
+        <div class="field"><label>Product / Module(s)</label><input type="text" id="edit-view-products" readonly style="background:var(--off-white);"></div>
+        <div class="field"><label>Potential MRR (₹)</label><input type="text" id="edit-view-mrr" readonly style="background:var(--off-white);"></div>
+        <div class="field"><label>Planned Close</label><input type="text" id="edit-view-close" readonly style="background:var(--off-white);"></div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:10px;">Update</div>
     <div class="form-grid">
-      <div class="field"><label>Stage</label><select id="edit-stage" onchange="toggleBillingMonth('edit-billing-wrap',this.value)"><option>Identified</option><option>Qualified</option><option>Demo Done</option><option>Proposal Sent</option><option>Closed Won</option><option>Closed Lost</option></select></div>
-      <div class="field"><label>Billed?</label><select id="edit-billed"><option value="No">No</option><option value="Yes">Yes</option></select></div>
-      <div class="field conditional-field" id="edit-billing-wrap"><label>Actual Billing Month</label><input type="month" id="edit-billing-month"></div>
-      <div class="field"><label>Expected Close</label><input type="month" id="edit-close-date"></div>
-      <div class="field"><label>Lead Type</label><select id="edit-lead-type"><option value="">—</option><option>Warm</option><option>Early Stage (Cold)</option><option>Cold</option></select></div>
+      <div class="field"><label>Stage *</label>
+        <select id="edit-stage" onchange="onEditStageChange(this.value)" required>
+          <option value="">—</option>
+          <option>Identified</option><option>Qualified</option><option>Demo Done</option>
+          <option>Proposal Sent</option><option>Closed Won</option>
+          <option>Delayed Closure</option><option>Closed Lost</option>
+        </select></div>
+      <div class="field"><label>Lead Type</label>
+        <select id="edit-lead-type"><option value="">—</option><option>Warm</option><option>Early Stage (Cold)</option><option>Cold</option></select></div>
+      <div class="field"><label>Expected Close Month *</label>
+        <select id="edit-close-month">
+          <option value="">— Month —</option>
+          <option value="01">January</option>
+<option value="02">February</option>
+<option value="03">March</option>
+<option value="04">April</option>
+<option value="05">May</option>
+<option value="06">June</option>
+<option value="07">July</option>
+<option value="08">August</option>
+<option value="09">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
+        </select></div>
+      <div class="field"><label>Expected Close Year *</label>
+        <select id="edit-close-year">
+          <option value="">— Year —</option>
+          <option value="2024">2024</option>
+<option value="2025">2025</option>
+<option value="2026">2026</option>
+<option value="2027">2027</option>
+<option value="2028">2028</option>
+<option value="2029">2029</option>
+        </select></div>
+      <div class="field"><label>Billed?</label>
+        <select id="edit-billed"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+      <div class="field conditional-field" id="edit-billing-wrap" style="display:none;"><label>Actual Billing Month *</label><input type="month" id="edit-billing-month"></div>
       <div class="field form-full"><label>Remarks</label><textarea id="edit-remarks"></textarea></div>
     </div>
+
+    <!-- Closed Won fields -->
+    <div id="edit-won-wrap" style="display:none;background:#EAFAF1;border:1px solid #86EFAC;border-radius:10px;padding:14px;margin-top:12px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:10px;">✓ Won — Realisation Details</div>
+      <div class="form-grid">
+        <div class="field"><label>Actual Realised MRR (₹) *</label><input type="number" id="edit-realised-mrr" placeholder="Actual MRR realised"></div>
+        <div class="field"><label>Realisation Month *</label>
+          <select id="edit-real-month">
+            <option value="">— Month —</option>
+            <option value="01">January</option>
+<option value="02">February</option>
+<option value="03">March</option>
+<option value="04">April</option>
+<option value="05">May</option>
+<option value="06">June</option>
+<option value="07">July</option>
+<option value="08">August</option>
+<option value="09">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
+          </select></div>
+        <div class="field"><label>Realisation Year *</label>
+          <select id="edit-real-year">
+            <option value="">— Year —</option>
+            <option value="2024">2024</option>
+<option value="2025">2025</option>
+<option value="2026">2026</option>
+<option value="2027">2027</option>
+<option value="2028">2028</option>
+<option value="2029">2029</option>
+          </select></div>
+        <div class="field conditional-field" id="edit-delay-won-wrap" style="display:none;">
+          <label>Delay Reason * <span style="font-weight:400;color:var(--amber);">(Realisation after planned close)</span></label>
+          <select id="edit-delay-won-reason">
+            <option value="">— Select reason —</option>
+            <option value="Product Delay">Product Delay</option>
+<option value="Tech Instability">Tech Instability</option>
+<option value="Tech Delay">Tech Delay</option>
+<option value="Client Delay">Client Delay</option>
+<option value="Execution Delay">Execution Delay</option>
+<option value="Pilot Delayed">Pilot Delayed</option>
+          </select></div>
+      </div>
+    </div>
+
+    <!-- Delayed Closure fields -->
+    <div id="edit-delayed-wrap" style="display:none;background:#FFF7ED;border:1px solid var(--amber);border-radius:10px;padding:14px;margin-top:12px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin-bottom:10px;">⚠ Delayed Closure — Reason</div>
+      <div class="field"><label>Delay Reason *</label>
+        <select id="edit-delay-closure-reason">
+          <option value="">— Select reason —</option>
+          <option value="Product Delay">Product Delay</option>
+<option value="Tech Instability">Tech Instability</option>
+<option value="Tech Delay">Tech Delay</option>
+<option value="Client Delay">Client Delay</option>
+<option value="Execution Delay">Execution Delay</option>
+<option value="Pilot Delayed">Pilot Delayed</option>
+        </select></div>
+    </div>
+
+    <!-- Closed Lost fields -->
+    <div id="edit-lost-wrap" style="display:none;background:var(--off-white);border:1px solid var(--red);border-radius:10px;padding:14px;margin-top:12px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--red);margin-bottom:10px;">✕ Lost — Reason</div>
+      <div class="field"><label>Lost Reason *</label>
+        <select id="edit-lost-reason">
+          <option value="">— Select reason —</option>
+          <option value="Commercial Issues">Commercial Issues</option>
+<option value="Client Expectation not Matched">Client Expectation not Matched</option>
+<option value="Product Not Stable">Product Not Stable</option>
+<option value="Delay in developments">Delay in developments</option>
+        </select></div>
+    </div>
+
     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
       <button class="btn btn-secondary" onclick="closeModal('editPipelineModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditedPipeline()">Save Changes →</button>
     </div>
+  </div>
+</div>
+
+
+<!-- DELAYED MRR DRILLDOWN MODAL -->
+<div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;" id="delayedMrrModal">
+  <div style="background:white;border-radius:16px;padding:28px;width:560px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h2 style="font-family:'DM Serif Display',serif;font-size:20px;" id="drilldown-title">Breakdown</h2>
+      <button class="btn btn-secondary" onclick="closeModal('delayedMrrModal')">✕ Close</button>
+    </div>
+    <div id="drilldown-content"></div>
   </div>
 </div>
 
@@ -1285,9 +1480,35 @@ async function syncToSheets(data){
 
 // ── SUBMITS ──
 async function submitAccountMaster(e){
-  e.preventDefault();const g=id=>document.getElementById(id).value;
-  await syncToSheets({type:'account_master',timestamp:new Date().toISOString(),submittedBy:g('currentUser'),company:g('am-company'),hq:g('am-hq'),mrr:g('am-mrr'),onboarding:g('am-onboarding'),golive:g('am-golive'),accountStatus:document.getElementById('am-account-status').value,am:g('am-am'),csm:g('am-csm'),pmName:g('am-pm-name'),pmEmail:g('am-pm-email'),pmPhone:g('am-pm-phone'),dmName:g('am-dm-name'),dmDesignation:g('am-dm-designation'),dmEmail:g('am-dm-email'),dmPhone:g('am-dm-phone')});
-  await fetchCentralData();showToast('Account saved — '+g('am-company'));document.getElementById('accountMasterForm').reset();
+  e.preventDefault();
+  const g = id => document.getElementById(id)?.value || '';
+  const company = g('am-company');
+  if (!company) { showToast('Company name is required'); return; }
+  const saveBtn = e.target.querySelector('[type=submit]');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Saving...'; }
+  try {
+    await syncToSheets({
+      type:'account_master', timestamp:new Date().toISOString(),
+      submittedBy: g('currentUser'), company,
+      hq: g('am-hq'), mrr: g('am-mrr'),
+      onboarding: g('am-onboarding'), golive: g('am-golive'),
+      accountStatus: document.getElementById('am-account-status')?.value || 'Active',
+      am: g('am-am'), csm: g('am-csm'),
+      pmName: g('am-pm-name'), pmEmail: g('am-pm-email'), pmPhone: g('am-pm-phone'),
+      dmName: g('am-dm-name'), dmDesignation: g('am-dm-designation'),
+      dmEmail: g('am-dm-email'), dmPhone: g('am-dm-phone')
+    });
+    await new Promise(r => setTimeout(r, 800));
+    await fetchCentralData();
+    // Show visible success banner
+    showSaveConfirmation('am-save-confirmation', company);
+    showToast('✅ Account saved — ' + company);
+    document.getElementById('accountMasterForm').reset();
+  } catch(err) {
+    showToast('Error saving account. Please try again.');
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Account →'; }
+  }
 }
 async function submitOperational(e){
   e.preventDefault();const v=k=>parseFloat(document.getElementById(k).value);const g=id=>document.getElementById(id).value;
@@ -1297,10 +1518,43 @@ async function submitOperational(e){
   showToast('Saved — SKAM: '+skamScore);resetOperational();
 }
 async function submitGrowth(e){
-  e.preventDefault();const g=id=>document.getElementById(id).value;const stage=g('gr-stage');
+  e.preventDefault();
+  const g=id=>document.getElementById(id).value;
+  const stage=g('gr-stage');
+  const closeMonth=g('gr-close-month');
+  const closeYear=g('gr-close-year');
+  const mrr=g('gr-mrr');
+  const delayReason=g('gr-delay-reason');
+  const lostReason=g('gr-lost-reason');
+
+  if(!stage){showToast('Please select a stage');return;}
+  if(!closeMonth||!closeYear){showToast('Please select Expected Close Month and Year');return;}
+  if(!mrr){showToast('Potential MRR is mandatory');return;}
+  if(stage==='Delayed Closure'&&!delayReason){showToast('Please select a Delay Reason');return;}
+  if(stage==='Closed Lost'&&!lostReason){showToast('Please select a Lost Reason');return;}
   if(stage==='Closed Won'&&!g('gr-billing-month')){showToast('Please enter Actual Billing Month');return;}
-  await syncToSheets({type:'growth_pipeline',timestamp:new Date().toISOString(),account:g('gr-account'),am:g('gr-am'),oppType:g('gr-type'),leadType:g('gr-lead-type'),products:MS_SELECTIONS.product.join(', '),potentialMrr:g('gr-mrr'),oneTime:g('gr-onetime'),stage,closeDate:g('gr-close-date'),billingMonth:g('gr-billing-month'),billed:g('gr-billed'),remarks:g('gr-remarks')});
-  showToast('Opportunity saved');document.getElementById('growthForm').reset();MS_SELECTIONS.product=[];renderMsTags('product');toggleBillingMonth('gr-billing-wrap','');
+
+  const closeDate=closeYear+'-'+closeMonth;
+  await syncToSheets({
+    type:'growth_pipeline',
+    timestamp:new Date().toISOString(),
+    account:g('gr-account'),am:g('gr-am'),
+    oppType:g('gr-type'),leadType:g('gr-lead-type'),
+    products:MS_SELECTIONS.product.join(', '),
+    potentialMrr:mrr,oneTime:g('gr-onetime'),
+    stage,closeDate,
+    billingMonth:g('gr-billing-month'),
+    billed:g('gr-billed'),
+    remarks:g('gr-remarks'),
+    delayReason:stage==='Delayed Closure'?delayReason:'',
+    lostReason:stage==='Closed Lost'?lostReason:''
+  });
+  showToast('Opportunity saved');
+  document.getElementById('growthForm').reset();
+  MS_SELECTIONS.product=[];renderMsTags('product');
+  document.getElementById('gr-delay-reason-wrap').style.display='none';
+  document.getElementById('gr-lost-reason-wrap').style.display='none';
+  document.getElementById('gr-billing-wrap').style.display='none';
 }
 
 // ── EDIT ACCOUNT ──
@@ -1333,19 +1587,101 @@ async function saveEditedAccount(){
 function openEditPipeline(idx){
   const p=allPipelineData[idx];if(!p)return;
   const stage=p['Opportunity Stage']||p.stage||'';
+  const closeDate=p['Expected Close Date']||p.closeDate||'';
+  const account=p['Account Name']||p.account||'';
+
   document.getElementById('edit-row-index').value=idx;
+  document.getElementById('edit-entry-label').textContent=account+' · '+(p['Opportunity Type']||p.oppType||'')+ ' · ₹'+(Number(p['Potential MRR (₹)']||p.potentialMrr||0).toLocaleString('en-IN'));
+
+  // Read-only original details
+  document.getElementById('edit-view-account').value=account;
+  document.getElementById('edit-view-am').value=p['Account Manager']||p.am||'';
+  document.getElementById('edit-view-type').value=p['Opportunity Type']||p.oppType||'';
+  document.getElementById('edit-view-products').value=p['Product/Modules']||p.products||'';
+  document.getElementById('edit-view-mrr').value='₹'+(Number(p['Potential MRR (₹)']||p.potentialMrr||0).toLocaleString('en-IN'));
+
+  // Parse closeDate (YYYY-MM format)
+  let closeMonthVal='',closeYearVal='';
+  if(closeDate&&closeDate.length>=7){closeYearVal=closeDate.substring(0,4);closeMonthVal=closeDate.substring(5,7);}
+  document.getElementById('edit-view-close').value=closeMonthVal&&closeYearVal?(new Date(closeDate+'-01').toLocaleDateString('en-IN',{month:'long',year:'numeric'})):'—';
+
+  // Editable fields
   document.getElementById('edit-stage').value=stage;
   document.getElementById('edit-billed').value=p['Billed']||p.billed||'No';
-  document.getElementById('edit-close-date').value=p['Expected Close Date']||p.closeDate||'';
   document.getElementById('edit-billing-month').value=p['Actual Billing Month']||p.billingMonth||'';
+  document.getElementById('edit-close-month').value=closeMonthVal;
+  document.getElementById('edit-close-year').value=closeYearVal;
   document.getElementById('edit-lead-type').value=p['Lead Type']||p.leadType||'';
   document.getElementById('edit-remarks').value=p['Remarks']||p.remarks||'';
-  toggleBillingMonth('edit-billing-wrap',stage);
+
+  // Pre-fill won/delay/lost fields if already set
+  document.getElementById('edit-realised-mrr').value=p['Actual Realised MRR']||'';
+  const realDate=p['Actual Realisation Date']||'';
+  if(realDate&&realDate.length>=7){
+    document.getElementById('edit-real-month').value=realDate.substring(5,7);
+    document.getElementById('edit-real-year').value=realDate.substring(0,4);
+  } else {document.getElementById('edit-real-month').value='';document.getElementById('edit-real-year').value='';}
+  document.getElementById('edit-delay-won-reason').value=p['Delay Reason']||'';
+  document.getElementById('edit-delay-closure-reason').value=p['Delay Reason']||'';
+  document.getElementById('edit-lost-reason').value=p['Lost Reason']||'';
+
+  onEditStageChange(stage);
   openModal('editPipelineModal');
 }
 async function saveEditedPipeline(){
-  const idx=parseInt(document.getElementById('edit-row-index').value);const p=allPipelineData[idx];const g=id=>document.getElementById(id).value;const stage=g('edit-stage');
-  await syncToSheets({type:'update_pipeline',timestamp:p['Timestamp']||p.timestamp,account:p['Account Name']||p.account,potentialMrr:p['Potential MRR (₹)']||p.potentialMrr||0,stage,billed:g('edit-billed'),billingMonth:g('edit-billing-month'),closeDate:g('edit-close-date'),leadType:g('edit-lead-type'),remarks:g('edit-remarks'),updatedBy:document.getElementById('currentUser').value,updatedAt:new Date().toISOString()});
+  const idx=parseInt(document.getElementById('edit-row-index').value);
+  const p=allPipelineData[idx];
+  const g=id=>document.getElementById(id).value;
+  const stage=g('edit-stage');
+  if(!stage){showToast('Please select a stage');return;}
+
+  const closeMonth=g('edit-close-month');
+  const closeYear=g('edit-close-year');
+  if(!closeMonth||!closeYear){showToast('Please select Expected Close Month and Year');return;}
+  const closeDate=closeYear+'-'+closeMonth;
+
+  // Stage-specific validation
+  if(stage==='Delayed Closure'&&!g('edit-delay-closure-reason')){showToast('Please select a Delay Reason');return;}
+  if(stage==='Closed Lost'&&!g('edit-lost-reason')){showToast('Please select a Lost Reason');return;}
+  if(stage==='Closed Won'){
+    if(!g('edit-realised-mrr')){showToast('Please enter Actual Realised MRR');return;}
+    if(!g('edit-real-month')||!g('edit-real-year')){showToast('Please select Realisation Month and Year');return;}
+  }
+
+  // Determine MRR status for Won entries
+  let mrrStatus='';let delayReason='';
+  if(stage==='Closed Won'){
+    const realDate=g('edit-real-year')+'-'+g('edit-real-month');
+    if(realDate>closeDate){
+      mrrStatus='Delayed MRR';
+      delayReason=g('edit-delay-won-reason');
+      if(!delayReason){showToast('Please select a Delay Reason');return;}
+    } else {
+      mrrStatus='On Time';
+    }
+  }
+  if(stage==='Delayed Closure') delayReason=g('edit-delay-closure-reason');
+
+  const payload={
+    type:'update_pipeline',
+    timestamp:p['Timestamp']||p.timestamp,
+    account:p['Account Name']||p.account,
+    potentialMrr:p['Potential MRR (₹)']||p.potentialMrr||0,
+    stage,closeDate,
+    billed:g('edit-billed'),
+    billingMonth:g('edit-billing-month'),
+    leadType:g('edit-lead-type'),
+    remarks:g('edit-remarks'),
+    realisedMrr:stage==='Closed Won'?g('edit-realised-mrr'):'',
+    realisationDate:stage==='Closed Won'?(g('edit-real-year')+'-'+g('edit-real-month')):'',
+    mrrStatus,
+    delayReason,
+    lostReason:stage==='Closed Lost'?g('edit-lost-reason'):'',
+    updatedBy:document.getElementById('currentUser').value,
+    updatedAt:new Date().toISOString()
+  };
+
+  await syncToSheets(payload);
   closeModal('editPipelineModal');showToast('Pipeline updated');
   await fetchCentralData();loadPipelineList();
 }
@@ -3066,6 +3402,120 @@ function refreshObManage() {
   });
 }
 
+
+// ── PIPELINE STAGE CONDITIONAL UI ──
+function onGrStageChange(stage){
+  document.getElementById('gr-billing-wrap').style.display=stage==='Closed Won'?'block':'none';
+  document.getElementById('gr-delay-reason-wrap').style.display=stage==='Delayed Closure'?'block':'none';
+  document.getElementById('gr-lost-reason-wrap').style.display=stage==='Closed Lost'?'block':'none';
+  // Reset conditionals
+  if(stage!=='Delayed Closure') document.getElementById('gr-delay-reason').value='';
+  if(stage!=='Closed Lost') document.getElementById('gr-lost-reason').value='';
+}
+
+function onEditStageChange(stage){
+  document.getElementById('edit-billing-wrap').style.display=stage==='Closed Won'?'block':'none';
+  document.getElementById('edit-won-wrap').style.display=stage==='Closed Won'?'block':'none';
+  document.getElementById('edit-delayed-wrap').style.display=stage==='Delayed Closure'?'block':'none';
+  document.getElementById('edit-lost-wrap').style.display=stage==='Closed Lost'?'block':'none';
+  // Check if delay needed based on current values
+  if(stage==='Closed Won') checkEditWonDelay();
+}
+
+function checkEditWonDelay(){
+  const closeMonth=document.getElementById('edit-close-month').value;
+  const closeYear=document.getElementById('edit-close-year').value;
+  const realMonth=document.getElementById('edit-real-month').value;
+  const realYear=document.getElementById('edit-real-year').value;
+  if(!closeMonth||!closeYear||!realMonth||!realYear) return;
+  const planned=closeYear+'-'+closeMonth;
+  const actual=realYear+'-'+realMonth;
+  document.getElementById('edit-delay-won-wrap').style.display=actual>planned?'block':'none';
+}
+
+// Add event listeners for Won delay check
+document.addEventListener('DOMContentLoaded',()=>{
+  ['edit-real-month','edit-real-year'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('change',checkEditWonDelay);
+  });
+});
+
+// ── DELAYED MRR DRILLDOWN ──
+function showDelayedMrrDrilldown(type){
+  const pip=centralData.pipeline||[];
+  let title='';let items=[];
+
+  if(type==='delayed_won'){
+    title='Delayed Won MRR — Reason Breakdown';
+    items=pip.filter(p=>(p['MRR Status']||p.mrrStatus)==='Delayed MRR');
+  } else if(type==='delayed_closure'){
+    title='Delayed Closure MRR — Reason Breakdown';
+    items=pip.filter(p=>(p['Opportunity Stage']||p.stage)==='Delayed Closure');
+  } else if(type==='lost'){
+    title='Lost MRR — Reason Breakdown';
+    items=pip.filter(p=>(p['Opportunity Stage']||p.stage)==='Closed Lost');
+  }
+
+  document.getElementById('drilldown-title').textContent=title;
+
+  if(!items.length){
+    document.getElementById('drilldown-content').innerHTML='<div style="text-align:center;padding:40px;color:var(--text-mid);font-size:13px;">No entries found</div>';
+    openModal('delayedMrrModal');return;
+  }
+
+  const reasonKey=type==='lost'?['Lost Reason','lostReason']:['Delay Reason','delayReason'];
+  const byReason={};
+  items.forEach(p=>{
+    const reason=p[reasonKey[0]]||p[reasonKey[1]]||'Unknown';
+    if(!byReason[reason])byReason[reason]={count:0,mrr:0,accounts:[]};
+    byReason[reason].count++;
+    const mrr=type==='delayed_won'
+      ?Number(p['Actual Realised MRR']||p.realisedMrr||p['Potential MRR (₹)']||p.potentialMrr||0)
+      :Number(p['Potential MRR (₹)']||p.potentialMrr||0);
+    byReason[reason].mrr+=mrr;
+    byReason[reason].accounts.push(p['Account Name']||p.account||'—');
+  });
+
+  const sorted=Object.entries(byReason).sort((a,b)=>b[1].mrr-a[1].mrr);
+  const totalMrr=sorted.reduce((s,[,v])=>s+v.mrr,0);
+
+  const rowColor=type==='lost'?'var(--red-bg)':type==='delayed_won'?'var(--amber-bg)':'#FFF7ED';
+  const textColor=type==='lost'?'var(--red)':type==='delayed_won'?'var(--amber)':'var(--amber)';
+
+  let html=`<div style="text-align:right;font-size:12px;color:var(--text-mid);margin-bottom:14px;">Total: <strong style="color:var(--navy);">₹${totalMrr.toLocaleString('en-IN')}</strong></div>`;
+  html+=sorted.map(([reason,data])=>{
+    const pct=totalMrr>0?Math.round(data.mrr/totalMrr*100):0;
+    return`<div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--navy);">${reason}</div>
+          <div style="font-size:11px;color:var(--text-mid);margin-top:2px;">${data.count} deal${data.count>1?'s':''} · ${data.accounts.join(', ')}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:14px;font-weight:700;color:${textColor};">₹${data.mrr.toLocaleString('en-IN')}</div>
+          <div style="font-size:10px;color:var(--text-light);">${pct}% of total</div>
+        </div>
+      </div>
+      <div style="background:var(--border);border-radius:3px;height:6px;overflow:hidden;">
+        <div style="background:${textColor};width:${pct}%;height:100%;border-radius:3px;"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('drilldown-content').innerHTML=html;
+  openModal('delayedMrrModal');
+}
+
+function showSaveConfirmation(bannerId, name) {
+  const banner = document.getElementById(bannerId);
+  const nameEl = document.getElementById(bannerId.replace('save-confirmation', 'save-name'));
+  if (!banner) return;
+  if (nameEl) nameEl.textContent = name + ' has been saved';
+  banner.style.display = 'block';
+  setTimeout(() => { banner.style.display = 'none'; }, 5000);
+}
+
 // ── UTILS ──
 function getLatestSkam(ops){const l={};ops.forEach(o=>{const a=o['Account Name']||o.account,d=o['Review Date']||o.reviewDate||'';if(!l[a]||d>(l[a]['Review Date']||l[a].reviewDate||''))l[a]=o;});return l;}
 function daysSince(ts){if(!ts)return 9999;const d=new Date(ts);if(isNaN(d))return 9999;return Math.floor((new Date()-d)/(1000*60*60*24));}
@@ -3173,6 +3623,18 @@ function loadDashboard(){
   const wonPip=myPip.filter(p=>(p['Opportunity Stage']||p.stage)==='Closed Won');
   document.getElementById('stat-pipeline').textContent=fmtMrr(openPip.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0));
   document.getElementById('stat-won-mrr').textContent=fmtMrr(wonPip.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0));
+  // Delayed Won MRR
+  const delayedWonPip=pip.filter(p=>(p['MRR Status']||p.mrrStatus)==='Delayed MRR');
+  const delayedWonMrr=delayedWonPip.reduce((s,p)=>s+(Number(p['Actual Realised MRR']||p.realisedMrr||p['Potential MRR (₹)']||p.potentialMrr)||0),0);
+  document.getElementById('stat-delayed-won-mrr').textContent=delayedWonMrr>0?fmtMrr(delayedWonMrr):'₹0';
+  // Delayed Closure MRR
+  const delayedClosurePip=pip.filter(p=>(p['Opportunity Stage']||p.stage)==='Delayed Closure');
+  const delayedClosureMrr=delayedClosurePip.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0);
+  document.getElementById('stat-delayed-closure-mrr').textContent=delayedClosureMrr>0?fmtMrr(delayedClosureMrr):'₹0';
+  // Lost MRR
+  const lostPip=pip.filter(p=>(p['Opportunity Stage']||p.stage)==='Closed Lost');
+  const lostMrr=lostPip.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0);
+  document.getElementById('stat-lost-mrr').textContent=lostMrr>0?fmtMrr(lostMrr):'₹0';
   const sc=Object.values(ls).map(o=>Number(o['SKAM Score']||o.skamScore)).filter(Boolean);
   document.getElementById('stat-skam').textContent=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):'—';
   // Stale pipeline
