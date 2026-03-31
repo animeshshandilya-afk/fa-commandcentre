@@ -704,31 +704,31 @@
   <!-- ═══ GROWTH TARGETS ═══ -->
   <div id="page-growth-targets" class="page">
     <div class="page-header">
-      <div><h1>Growth Targets</h1><p>Set quarterly & annual MRR growth targets per CSM — track achievement vs pipeline</p></div>
+      <div><h1>Growth Targets</h1><p>Set and track quarterly & annual MRR targets per CSM</p></div>
       <button class="btn btn-secondary" onclick="fetchCentralData().then(loadGrowthTargets)">↻ Refresh</button>
     </div>
     <div class="page-content">
-      <!-- SET TARGETS (Leadership only) -->
-      <div id="gt-set-targets-section">
-        <div class="card" style="margin-bottom:20px;">
-          <div class="card-title">Set / Update Targets</div>
-          <div id="gt-target-form"></div>
-          <div style="margin-top:16px;">
-            <button class="btn btn-primary" onclick="saveGrowthTargets()">Save Targets →</button>
-          </div>
-        </div>
-      </div>
-      <!-- ACHIEVEMENT DASHBOARD -->
+
+      <!-- SUMMARY STATS -->
       <div class="stats-grid" style="margin-bottom:20px;">
-        <div class="stat-card green"><div class="card-label">Total Target MRR</div><div class="card-value" id="gt-total-target">—</div><div class="card-sub">Across all CSMs</div></div>
+        <div class="stat-card green"><div class="card-label">Total Target MRR</div><div class="card-value" id="gt-total-target">—</div><div class="card-sub">Across all CSMs (Q)</div></div>
         <div class="stat-card teal"><div class="card-label">Total Achieved</div><div class="card-value" id="gt-total-achieved">—</div><div class="card-sub">Closed Won MRR</div></div>
         <div class="stat-card amber"><div class="card-label">Pipeline Forecast</div><div class="card-value" id="gt-total-pipeline">—</div><div class="card-sub">Open opportunities</div></div>
         <div class="stat-card red"><div class="card-label">Total Gap</div><div class="card-value" id="gt-total-gap">—</div><div class="card-sub">Still needed</div></div>
       </div>
-      <div class="section-row">
-        <div class="card"><div class="card-title">Quarterly Targets — Achievement</div><div id="gt-quarterly-table"></div></div>
-        <div class="card"><div class="card-title">Annual Targets — Achievement</div><div id="gt-annual-table"></div></div>
+
+      <!-- SET TARGETS (Leadership only) -->
+      <div id="gt-set-targets-section" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);">Set / Update Targets</div>
+          <button class="btn btn-primary" onclick="saveGrowthTargets()" id="gt-save-btn">Save All Targets →</button>
+        </div>
+        <div id="gt-target-form" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:20px;"></div>
       </div>
+
+      <!-- ACHIEVEMENT VIEW -->
+      <div id="gt-achievement-view"></div>
+
     </div>
   </div>
 
@@ -1758,94 +1758,188 @@ function loadGrowthTargets() {
   const accounts = centralData.accounts || [];
   const targets = centralData.targets || [];
 
-  // Show/hide set targets form
+  // Show/hide set targets section
   const setSection = document.getElementById('gt-set-targets-section');
   if (setSection) setSection.style.display = role === 'leadership' ? 'block' : 'none';
 
-  // Build target form for leadership
-  if (role === 'leadership') {
-    const form = document.getElementById('gt-target-form');
-    if (form) {
-      form.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr) 1fr 1fr;gap:10px;align-items:end;">
-        <div style="font-size:11px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.07em;">CSM</div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.07em;">Period</div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.07em;">Type</div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.07em;">Target MRR (₹)</div>
-        <div></div><div></div>
-        ${CSM_LIST.map(csm => {
-          const qTarget = targets.find(t => t['CSM'] === csm && t['Period Type'] === 'Quarterly') || {};
-          const aTarget = targets.find(t => t['CSM'] === csm && t['Period Type'] === 'Annual') || {};
-          return `
-            <div style="font-size:13px;font-weight:500;padding:8px 0;">${csm.split(' ')[0]}</div>
-            <input type="text" id="gt-period-q-${csm.replace(/\s/g,'_')}" value="${qTarget['Period'] || ''}" placeholder="e.g. Q1 FY26" style="padding:8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;">
-            <div style="font-size:11px;color:var(--text-light);padding:8px 0;">Quarterly</div>
-            <input type="number" id="gt-target-q-${csm.replace(/\s/g,'_')}" value="${qTarget['Target MRR'] || ''}" placeholder="e.g. 500000" style="padding:8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;">
-            <div style="font-size:13px;font-weight:500;padding:8px 0;grid-column:1"></div>
-            <input type="text" id="gt-period-a-${csm.replace(/\s/g,'_')}" value="${aTarget['Period'] || ''}" placeholder="e.g. FY2026-27" style="padding:8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;">
-            <div style="font-size:11px;color:var(--text-light);padding:8px 0;">Annual</div>
-            <input type="number" id="gt-target-a-${csm.replace(/\s/g,'_')}" value="${aTarget['Target MRR'] || ''}" placeholder="e.g. 2000000" style="padding:8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;">
-          `;
-        }).join('')}
-      </div>`;
-    }
-  }
-
-  // Build achievement data
+  // Build achievement data for all CSMs
   const csmData = {};
   CSM_LIST.forEach(csm => {
     const csmAccNames = accounts.filter(a => (a['CSM'] || a.csm) === csm).map(a => a['Company Name'] || a.company);
-    const achieved = pip.filter(p => (p['Opportunity Stage'] || p.stage) === 'Closed Won' && csmAccNames.includes(p['Account Name'] || p.account))
+    const achieved = pip
+      .filter(p => (p['Opportunity Stage'] || p.stage) === 'Closed Won' && csmAccNames.includes(p['Account Name'] || p.account))
       .reduce((s, p) => s + (Number(p['Potential MRR (₹)'] || p.potentialMrr) || 0), 0);
-    const pipeline = pip.filter(p => !['Closed Won','Closed Lost'].includes(p['Opportunity Stage'] || p.stage) && csmAccNames.includes(p['Account Name'] || p.account))
+    const pipeline = pip
+      .filter(p => !['Closed Won','Closed Lost'].includes(p['Opportunity Stage'] || p.stage) && csmAccNames.includes(p['Account Name'] || p.account))
       .reduce((s, p) => s + (Number(p['Potential MRR (₹)'] || p.potentialMrr) || 0), 0);
     const qTarget = targets.find(t => t['CSM'] === csm && t['Period Type'] === 'Quarterly');
     const aTarget = targets.find(t => t['CSM'] === csm && t['Period Type'] === 'Annual');
     csmData[csm] = {
       achieved, pipeline,
-      qTarget: Number(qTarget ? qTarget['Target MRR'] : 0) || 0,
-      aTarget: Number(aTarget ? aTarget['Target MRR'] : 0) || 0,
-      qPeriod: qTarget ? qTarget['Period'] : '—',
-      aPeriod: aTarget ? aTarget['Period'] : '—'
+      qTarget: Number(qTarget?.['Target MRR'] || 0),
+      aTarget: Number(aTarget?.['Target MRR'] || 0),
+      qPeriod: qTarget?.['Period'] || '',
+      aPeriod: aTarget?.['Period'] || ''
     };
   });
 
-  // Filter to current user if CSM
-  const visibleCSMs = role === 'csm' ? CSM_LIST.filter(c => c === u) : CSM_LIST;
+  const visibleCSMs = role === 'csm' ? CSM_LIST.filter(n => n === u) : CSM_LIST;
 
-  // Summary stats
-  const totTarget = visibleCSMs.reduce((s, c) => s + csmData[c].qTarget, 0);
-  const totAchieved = visibleCSMs.reduce((s, c) => s + csmData[c].achieved, 0);
-  const totPipeline = visibleCSMs.reduce((s, c) => s + csmData[c].pipeline, 0);
-  const totGap = Math.max(0, totTarget - totAchieved);
-  document.getElementById('gt-total-target').textContent = totTarget ? fmtMrr(totTarget) : '—';
+  // Summary stats (based on quarterly target)
+  const totTarget   = visibleCSMs.reduce((s, n) => s + csmData[n].qTarget, 0);
+  const totAchieved = visibleCSMs.reduce((s, n) => s + csmData[n].achieved, 0);
+  const totPipeline = visibleCSMs.reduce((s, n) => s + csmData[n].pipeline, 0);
+  const totGap      = Math.max(0, totTarget - totAchieved);
+  document.getElementById('gt-total-target').textContent   = totTarget   ? fmtMrr(totTarget)   : '—';
   document.getElementById('gt-total-achieved').textContent = totAchieved ? fmtMrr(totAchieved) : '—';
   document.getElementById('gt-total-pipeline').textContent = totPipeline ? fmtMrr(totPipeline) : '—';
-  document.getElementById('gt-total-gap').textContent = totGap ? fmtMrr(totGap) : '₹0';
+  document.getElementById('gt-total-gap').textContent      = totGap      ? fmtMrr(totGap)      : '₹0';
 
-  // Tables
-  const buildTable = (type) => {
-    const rows = visibleCSMs.map(csm => {
-      const d = csmData[csm];
-      const tgt = type === 'Q' ? d.qTarget : d.aTarget;
-      const period = type === 'Q' ? d.qPeriod : d.aPeriod;
-      const pct = tgt > 0 ? Math.round(d.achieved / tgt * 100) : null;
-      const gap = tgt > 0 ? Math.max(0, tgt - d.achieved) : null;
-      const pctForecast = tgt > 0 ? Math.round((d.achieved + d.pipeline) / tgt * 100) : null;
-      return `<tr>
-        <td><strong>${csm}</strong></td>
-        <td>${period}</td>
-        <td>${tgt ? '₹' + tgt.toLocaleString('en-IN') : '<span class="badge badge-gray">Not set</span>'}</td>
-        <td>${fmtMrrFull(d.achieved)}</td>
-        <td>${pct !== null ? `<span class="badge ${pct>=100?'badge-green':pct>=60?'badge-amber':'badge-red'}">${pct}%</span>` : '—'}</td>
-        <td>${d.pipeline ? fmtMrr(d.pipeline) : '—'}</td>
-        <td>${pctForecast !== null ? `<span class="badge ${pctForecast>=100?'badge-green':pctForecast>=75?'badge-amber':'badge-red'}">${pctForecast}%</span>` : '—'}</td>
-        <td>${gap !== null ? `<span style="color:${gap===0?'var(--green)':'var(--red)'};font-weight:600;">${gap===0?'✓ On target':'₹'+gap.toLocaleString('en-IN')}</span>` : '—'}</td>
-      </tr>`;
-    }).join('');
-    return `<div class="table-wrap"><table><thead><tr><th>CSM</th><th>Period</th><th>Target MRR</th><th>Achieved</th><th>% Done</th><th>Pipeline</th><th>W/ Pipeline</th><th>Gap</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  };
-  document.getElementById('gt-quarterly-table').innerHTML = buildTable('Q');
-  document.getElementById('gt-annual-table').innerHTML = buildTable('A');
+  // ── TARGET SETTING FORM (leadership only) ──
+  if (role === 'leadership') {
+    const form = document.getElementById('gt-target-form');
+    if (form) {
+      form.innerHTML = CSM_LIST.map(csm => {
+        const d = csmData[csm];
+        const initials = csm.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+        const key = csm.replace(/\s/g,'_');
+        return `<div style="background:white;border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <!-- CSM Header -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+            <div style="width:34px;height:34px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0;">${initials}</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--navy);">${csm}</div>
+              <div style="font-size:11px;color:var(--text-light);">CSM</div>
+            </div>
+          </div>
+          <!-- Quarterly Target -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:8px;">📅 Quarterly Target</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <label style="display:block;font-size:10px;font-weight:600;color:var(--text-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;">Period</label>
+                <input type="text" id="gt-period-q-${key}" value="${d.qPeriod}"
+                  placeholder="e.g. Q1 FY26"
+                  style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;outline:none;"
+                  onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'">
+              </div>
+              <div>
+                <label style="display:block;font-size:10px;font-weight:600;color:var(--text-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;">Target MRR (₹)</label>
+                <input type="number" id="gt-target-q-${key}" value="${d.qTarget || ''}"
+                  placeholder="e.g. 500000"
+                  style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;outline:none;"
+                  onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'">
+              </div>
+            </div>
+          </div>
+          <!-- Annual Target -->
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:8px;">📈 Annual Target</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <label style="display:block;font-size:10px;font-weight:600;color:var(--text-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;">Period</label>
+                <input type="text" id="gt-period-a-${key}" value="${d.aPeriod}"
+                  placeholder="e.g. FY2026-27"
+                  style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;outline:none;"
+                  onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'">
+              </div>
+              <div>
+                <label style="display:block;font-size:10px;font-weight:600;color:var(--text-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;">Target MRR (₹)</label>
+                <input type="number" id="gt-target-a-${key}" value="${d.aTarget || ''}"
+                  placeholder="e.g. 2000000"
+                  style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;outline:none;"
+                  onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'">
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── ACHIEVEMENT VIEW ──
+  const achieveEl = document.getElementById('gt-achievement-view');
+  if (!achieveEl) return;
+
+  achieveEl.innerHTML = `
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);margin-bottom:12px;">Achievement Tracker</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      ${visibleCSMs.map(csm => {
+        const d = csmData[csm];
+        const initials = csm.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+        // Quarterly calc
+        const qPct = d.qTarget > 0 ? Math.min(Math.round(d.achieved / d.qTarget * 100), 100) : null;
+        const qForecastPct = d.qTarget > 0 ? Math.min(Math.round((d.achieved + d.pipeline) / d.qTarget * 100), 100) : null;
+        const qGap = d.qTarget > 0 ? Math.max(0, d.qTarget - d.achieved) : null;
+        const qRag = qPct === null ? 'var(--text-light)' : qPct >= 100 ? 'var(--green)' : qPct >= 60 ? 'var(--amber)' : 'var(--red)';
+        // Annual calc
+        const aPct = d.aTarget > 0 ? Math.min(Math.round(d.achieved / d.aTarget * 100), 100) : null;
+        const aGap = d.aTarget > 0 ? Math.max(0, d.aTarget - d.achieved) : null;
+
+        return `<div style="background:white;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <!-- CSM Row -->
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);">
+            <div style="width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;">${initials}</div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);flex:1;">${csm}</div>
+            <div style="display:flex;gap:6px;">
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;background:var(--green-bg);color:var(--green);border-radius:8px;">Won: ${fmtMrr(d.achieved)||'₹0'}</span>
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;background:var(--light-blue);color:var(--blue);border-radius:8px;">Pipeline: ${fmtMrr(d.pipeline)||'₹0'}</span>
+            </div>
+          </div>
+          <!-- Q + Annual bars -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;divide-x:1px solid var(--border);">
+            <!-- Quarterly -->
+            <div style="padding:14px 16px;border-right:1px solid var(--border);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div>
+                  <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);">Quarterly</div>
+                  <div style="font-size:11px;color:var(--text-light);margin-top:1px;">${d.qPeriod || 'Period not set'}</div>
+                </div>
+                <div style="text-align:right;">
+                  ${d.qTarget ? `<div style="font-size:13px;font-weight:700;color:${qRag};">${qPct !== null ? qPct+'%' : '—'}</div>
+                  <div style="font-size:10px;color:var(--text-light);">of ₹${d.qTarget.toLocaleString('en-IN')}</div>` :
+                  '<span style="font-size:11px;color:var(--text-light);">No target set</span>'}
+                </div>
+              </div>
+              ${d.qTarget ? `
+              <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;">
+                <div style="height:100%;border-radius:4px;background:${qRag};width:${qPct||0}%;transition:width .4s;"></div>
+              </div>
+              ${qForecastPct !== null ? `<div style="background:var(--border);border-radius:4px;height:4px;overflow:hidden;margin-bottom:8px;opacity:.5;">
+                <div style="height:100%;border-radius:4px;background:var(--blue);width:${qForecastPct}%;"></div>
+              </div>` : ''}
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-mid);">
+                <span>Gap: <strong style="color:${qGap===0?'var(--green)':'var(--red)'};">${qGap===0?'✓ On target':'₹'+qGap.toLocaleString('en-IN')}</strong></span>
+                ${qForecastPct !== null ? `<span style="color:var(--blue);">W/ pipeline: ${qForecastPct}%</span>` : ''}
+              </div>` :
+              '<div style="font-size:11px;color:var(--text-light);padding:4px 0;">Set a quarterly target above</div>'}
+            </div>
+            <!-- Annual -->
+            <div style="padding:14px 16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div>
+                  <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);">Annual</div>
+                  <div style="font-size:11px;color:var(--text-light);margin-top:1px;">${d.aPeriod || 'Period not set'}</div>
+                </div>
+                <div style="text-align:right;">
+                  ${d.aTarget ? `<div style="font-size:13px;font-weight:700;color:${aPct!==null?(aPct>=100?'var(--green)':aPct>=40?'var(--amber)':'var(--red)'):'var(--text-light)'};">${aPct !== null ? aPct+'%' : '—'}</div>
+                  <div style="font-size:10px;color:var(--text-light);">of ₹${d.aTarget.toLocaleString('en-IN')}</div>` :
+                  '<span style="font-size:11px;color:var(--text-light);">No target set</span>'}
+                </div>
+              </div>
+              ${d.aTarget ? `
+              <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;">
+                <div style="height:100%;border-radius:4px;background:${aPct!==null?(aPct>=100?'var(--green)':aPct>=40?'var(--amber)':'var(--red)'):'var(--border)'};width:${aPct||0}%;transition:width .4s;"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text-mid);">
+                Gap: <strong style="color:${aGap===0?'var(--green)':'var(--red)'};">${aGap===0?'✓ On target':'₹'+(aGap||0).toLocaleString('en-IN')}</strong>
+              </div>` :
+              '<div style="font-size:11px;color:var(--text-light);padding:4px 0;">Set an annual target above</div>'}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
 async function saveGrowthTargets() {
@@ -1859,10 +1953,20 @@ async function saveGrowthTargets() {
     if (qPeriod && qTarget) saves.push({ type:'growth_target', csm, periodType:'Quarterly', period:qPeriod, targetMrr:qTarget, setBy:getCurrentUser(), timestamp:new Date().toISOString() });
     if (aPeriod && aTarget) saves.push({ type:'growth_target', csm, periodType:'Annual', period:aPeriod, targetMrr:aTarget, setBy:getCurrentUser(), timestamp:new Date().toISOString() });
   }
-  for (const s of saves) await syncToSheets(s);
-  await fetchCentralData();
-  loadGrowthTargets();
-  showToast('Targets saved — ' + saves.length + ' entries');
+  if (!saves.length) { showToast('Nothing to save — fill in at least one period and target'); return; }
+  const btn = document.getElementById('gt-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+  try {
+    for (const s of saves) await syncToSheets(s);
+    await new Promise(r => setTimeout(r, 800));
+    await fetchCentralData();
+    loadGrowthTargets();
+    showToast('✅ Targets saved — ' + saves.length + ' entr' + (saves.length===1?'y':'ies'));
+  } catch(err) {
+    showToast('Error saving targets. Please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save All Targets →'; }
+  }
 }
 
 // ================================================================
