@@ -549,6 +549,15 @@
           <button type="button" class="btn btn-secondary" onclick="resetOperational()">Clear</button>
           <button type="submit" class="btn btn-primary">Save Update →</button>
         </div>
+        <div id="op-save-confirmation" style="display:none;margin-top:14px;background:#EAFAF1;border:1px solid #86EFAC;border-radius:10px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:28px;height:28px;background:#4BA428;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">✓</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#1E8449;" id="op-save-name"></div>
+              <div style="font-size:11px;color:#27AE60;margin-top:1px;">Operational update saved and synced to the sheet</div>
+            </div>
+          </div>
+        </div>
       </form>
     </div></div>
   </div>
@@ -672,6 +681,15 @@
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('growthForm').reset();MS_SELECTIONS.product=[];renderMsTags('product');['gr-won-wrap','gr-delay-reason-wrap','gr-lost-reason-wrap','gr-won-delay-wrap'].forEach(id=>document.getElementById(id).style.display='none')">Clear</button>
           <button type="submit" class="btn btn-primary">Save Opportunity →</button>
+        </div>
+        <div id="gr-save-confirmation" style="display:none;margin-top:14px;background:#EAFAF1;border:1px solid #86EFAC;border-radius:10px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:28px;height:28px;background:#4BA428;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">✓</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#1E8449;" id="gr-save-name"></div>
+              <div style="font-size:11px;color:#27AE60;margin-top:1px;">Opportunity saved and synced to the sheet</div>
+            </div>
+          </div>
         </div>
       </form>
     </div></div>
@@ -827,6 +845,15 @@
                 <button type="button" class="btn btn-secondary" style="flex:1;" onclick="resetMeetingForm()">Clear</button>
                 <button type="submit" class="btn btn-primary" style="flex:2;">Save Review →</button>
               </div>
+              <div id="mr-save-confirmation" style="display:none;margin-top:14px;background:#EAFAF1;border:1px solid #86EFAC;border-radius:10px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:28px;height:28px;background:#4BA428;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">✓</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#1E8449;" id="mr-save-name"></div>
+              <div style="font-size:11px;color:#27AE60;margin-top:1px;">Meeting review saved and synced to the sheet</div>
+            </div>
+          </div>
+        </div>
             </form>
           </div>
         </div>
@@ -1542,11 +1569,25 @@ async function submitAccountMaster(e){
   }
 }
 async function submitOperational(e){
-  e.preventDefault();const v=k=>parseFloat(document.getElementById(k).value);const g=id=>document.getElementById(id).value;
+  e.preventDefault();
+  const v=k=>parseFloat(document.getElementById(k).value);
+  const g=id=>document.getElementById(id).value;
+  const account=g('op-account');
+  if(!account){showToast('Please select an account');return;}
   const rc=v('rc'),sd=v('sd'),cp=v('cp'),vp=v('vp'),es=v('es');
   const skamScore=Math.round(((rc+sd+(6-cp)+vp+es)/25)*100);
-  await syncToSheets({type:'operational',timestamp:new Date().toISOString(),account:g('op-account'),reviewDate:g('op-date'),reviewer:g('op-reviewer'),rc,sd,cp,vp,es,skamScore,growthFlag:sd<3?'High':sd<=4?'Medium':'Low',riskFlag:(vp<3||es<3||sd<3||cp>2.5)?'Yes':'No',lastMeeting:g('op-last-meeting'),lastMbr:g('op-last-mbr'),lastQbr:g('op-last-qbr'),lastDemo:g('op-last-demo'),demoStatus:g('op-demo-status'),demoProducts:MS_SELECTIONS.demo.join(', '),notes:g('op-notes')});
-  showToast('Saved — SKAM: '+skamScore);resetOperational();
+  const saveBtn=e.target.querySelector('[type=submit]');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='⏳ Saving...';}
+  try {
+    await syncToSheets({type:'operational',timestamp:new Date().toISOString(),account,reviewDate:g('op-date'),reviewer:g('op-reviewer'),rc,sd,cp,vp,es,skamScore,growthFlag:sd<3?'High':sd<=4?'Medium':'Low',riskFlag:(vp<3||es<3||sd<3||cp>2.5)?'Yes':'No',lastMeeting:g('op-last-meeting'),lastMbr:g('op-last-mbr'),lastQbr:g('op-last-qbr'),lastDemo:g('op-last-demo'),demoStatus:g('op-demo-status'),demoProducts:MS_SELECTIONS.demo.join(', '),notes:g('op-notes')});
+    showToast('✅ Saved — SKAM: '+skamScore);
+    showSaveConfirmation('op-save-confirmation', account+' — SKAM '+skamScore);
+    resetOperational();
+  } catch(err){
+    showToast('Error saving update. Please try again.');
+  } finally {
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save Update →';}
+  }
 }
 async function submitGrowth(e){
   e.preventDefault();
@@ -1583,30 +1624,36 @@ async function submitGrowth(e){
     }
   }
 
-  await syncToSheets({
-    type:'growth_pipeline',
-    timestamp:new Date().toISOString(),
-    account:g('gr-account'),am:g('gr-am'),
-    oppType:g('gr-type'),leadType:g('gr-lead-type'),
-    products:MS_SELECTIONS.product.join(', '),
-    potentialMrr:mrr,oneTime:g('gr-onetime'),
-    stage,closeDate,
-    billingMonth:stage==='Closed Won'?(g('gr-real-year')+'-'+g('gr-real-month')):'',
-    billed:g('gr-billed'),
-    remarks:g('gr-remarks'),
-    delayReason:stage==='Delayed Closure'?delayReason:(stage==='Closed Won'?wonDelayReason:''),
-    lostReason:stage==='Closed Lost'?lostReason:'',
-    realisedMrr:stage==='Closed Won'?g('gr-realised-mrr'):'',
-    realisationDate:stage==='Closed Won'?(g('gr-real-year')+'-'+g('gr-real-month')):'',
-    mrrStatus
-  });
-  showToast('Opportunity saved');
-  document.getElementById('growthForm').reset();
-  MS_SELECTIONS.product=[];renderMsTags('product');
-  document.getElementById('gr-delay-reason-wrap').style.display='none';
-  document.getElementById('gr-lost-reason-wrap').style.display='none';
-  document.getElementById('gr-won-wrap').style.display='none';
-  document.getElementById('gr-won-delay-wrap').style.display='none';
+  const saveBtn=e.target.querySelector('[type=submit]');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='⏳ Saving...';}
+  try {
+    await syncToSheets({
+      type:'growth_pipeline',
+      timestamp:new Date().toISOString(),
+      account:g('gr-account'),am:g('gr-am'),
+      oppType:g('gr-type'),leadType:g('gr-lead-type'),
+      products:MS_SELECTIONS.product.join(', '),
+      potentialMrr:mrr,oneTime:g('gr-onetime'),
+      stage,closeDate,
+      billingMonth:stage==='Closed Won'?(g('gr-real-year')+'-'+g('gr-real-month')):'',
+      billed:g('gr-billed'),
+      remarks:g('gr-remarks'),
+      delayReason:stage==='Delayed Closure'?delayReason:(stage==='Closed Won'?wonDelayReason:''),
+      lostReason:stage==='Closed Lost'?lostReason:'',
+      realisedMrr:stage==='Closed Won'?g('gr-realised-mrr'):'',
+      realisationDate:stage==='Closed Won'?(g('gr-real-year')+'-'+g('gr-real-month')):'',
+      mrrStatus
+    });
+    showToast('✅ Opportunity saved');
+    showSaveConfirmation('gr-save-confirmation', (g('gr-account')||'Opportunity')+' — '+stage);
+    document.getElementById('growthForm').reset();
+    MS_SELECTIONS.product=[];renderMsTags('product');
+    ['gr-delay-reason-wrap','gr-lost-reason-wrap','gr-won-wrap','gr-won-delay-wrap'].forEach(id=>document.getElementById(id).style.display='none');
+  } catch(err){
+    showToast('Error saving opportunity. Please try again.');
+  } finally {
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save Opportunity →';}
+  }
 }
 
 // ── EDIT ACCOUNT ──
@@ -2048,24 +2095,35 @@ function loadPrevActionables(accountName) {
 async function submitMeetingReview(e) {
   e.preventDefault();
   const g = id => document.getElementById(id)?.value || '';
+  const account = g('mr-account');
+  if(!account){showToast('Please select an account');return;}
   const actionables = getActionables();
-  const data = {
-    type: 'meeting_review',
-    timestamp: new Date().toISOString(),
-    account: g('mr-account'),
-    reviewDate: g('mr-date'),
-    meetingType: g('mr-type'),
-    nextDate: g('mr-next-date'),
-    attendeesClient: g('mr-attendees-client'),
-    attendeesFa: g('mr-attendees-fa'),
-    notes: g('mr-notes'),
-    actionables: JSON.stringify(actionables),
-    loggedBy: getCurrentUser()
-  };
-  await syncToSheets(data);
-  await fetchCentralData();
-  showToast('Meeting review saved — ' + actionables.length + ' actionable(s)');
-  resetMeetingForm();
+  const saveBtn = e.target.querySelector('[type=submit]');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='⏳ Saving...';}
+  try {
+    const data = {
+      type: 'meeting_review',
+      timestamp: new Date().toISOString(),
+      account,
+      reviewDate: g('mr-date'),
+      meetingType: g('mr-type'),
+      nextDate: g('mr-next-date'),
+      attendeesClient: g('mr-attendees-client'),
+      attendeesFa: g('mr-attendees-fa'),
+      notes: g('mr-notes'),
+      actionables: JSON.stringify(actionables),
+      loggedBy: getCurrentUser()
+    };
+    await syncToSheets(data);
+    await fetchCentralData();
+    showToast('✅ Meeting review saved — ' + actionables.length + ' actionable(s)');
+    showSaveConfirmation('mr-save-confirmation', account+' — '+actionables.length+' actionable'+(actionables.length!==1?'s':''));
+    resetMeetingForm();
+  } catch(err){
+    showToast('Error saving review. Please try again.');
+  } finally {
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save Review →';}
+  }
 }
 
 function resetMeetingForm() {
@@ -2316,7 +2374,7 @@ async function generateMoM() {
   const systemPrompt = `You are a Senior Customer Success Consultant at FieldAssist — a B2B SaaS RTM platform for CPG/FMCG companies in India. You are creating a professional Minutes of Meeting (MoM) for a client.
 
 YOUR CORE PRINCIPLE — VALUE ENGINEERING:
-Every discussion point must be framed around BUSINESS VALUE, not product features. Never say "we discussed the DMS module". Say "Distribution Management visibility was reviewed — enabling real-time secondary sales tracking that eliminates the 2-3 day lag in distributor reporting." Connect every point to the client's business outcome.
+Every discussion point must be framed around BUSINESS OUTCOME, not product features or internal metrics. Never say "we discussed the DMS module" or reference internal scores. Say "Secondary sales visibility was reviewed — the client will gain real-time distributor reporting, eliminating the current 2-3 day lag." Every point = what was discussed + what it means for the client's business + what action or decision it drives.
 
 TONE: Confident, consultative, partnership-oriented. FieldAssist is a strategic partner, not a vendor.
 
@@ -2324,11 +2382,11 @@ OUTPUT: Respond ONLY with a valid JSON object. No text before or after. First ch
 
 {
   "email_subject": "MoM | [Client] | [Meeting Type] | [Date]",
-  "email_body": "Professional 5-8 line email body. Open with the single most important outcome or decision from the meeting. Reference specific business impact. Mention the number of action items agreed (e.g. 'We have agreed on 4 action items, detailed in the attached MoM'). Close with clear next steps and date. Warm but professional tone. Do NOT use bullet points in the email body — flowing prose only.",
+  "email_body": "Professional 5-8 line email body. Open with the single most important outcome or decision from the meeting. Reference specific business impact. Mention the number of action items agreed. Close with clear next steps and date. Warm but professional tone. No bullet points — flowing prose only.",
   "sections": [
     {
       "title": "Section title",
-      "type": "context|discussion|decisions|actions|next_steps",
+      "type": "discussion|decisions|next_steps",
       "points": ["Point 1 — value-framed", "Point 2 — value-framed"]
     }
   ],
@@ -2342,34 +2400,32 @@ OUTPUT: Respond ONLY with a valid JSON object. No text before or after. First ch
   ]
 }
 
-MANDATORY MoM SECTIONS:
-1. Meeting Context (type: context) — who met, why, what was the agenda
-2. Key Discussion Points (type: discussion) — each point value-framed around business outcome, not feature
-3. Decisions Made (type: decisions) — concrete decisions, commitments from both sides
-4. Action Items (type: actions) — brief summary only (full table is in action_items array above)
-5. Next Steps & Agenda (type: next_steps) — what the next meeting will cover, tentative date
+MANDATORY MoM SECTIONS (3 sections only — no internal context section):
+1. Key Discussion Points (type: discussion) — MAX 4 points. Each point must be ONE crisp sentence: [Topic] → [Business outcome for client]. No padding, no repetition. If a point has no clear business outcome, omit it.
+2. Decisions & Commitments (type: decisions) — concrete decisions made and commitments from both sides. Only include if a real decision was taken.
+3. Next Steps & Agenda (type: next_steps) — specific actions with owners, and what the next meeting will cover.
 
-CRITICAL for action_items: Extract EVERY actionable, commitment, follow-up, or deadline mentioned in the meeting content. If owner is not clear, mark as "To be assigned". Always include priority based on urgency/context.
+CRITICAL for discussion points — be CRISP and SPECIFIC:
+BAD: "DMS was discussed and the team reviewed the current configuration and talked about improvements that could be made to help the client."
+GOOD: "DMS real-time secondary tracking reviewed — client to gain distributor-wise sell-out visibility by [date], enabling faster stockout response."
+Maximum 1 sentence per point. Use actual numbers and dates from the transcript where available.
 
-CRITICAL for discussion points: [What was discussed] — [Why it matters to the client's business] — [What the outcome or implication is].`;
+CRITICAL for action_items: Extract EVERY actionable, commitment, follow-up, or deadline. Mark owner clearly. Always include priority.`;
 
   const userPrompt = `Generate a MoM for the following meeting:
 
 CLIENT: ${account}
-INDUSTRY: ${accData['Client HQ'] || 'CPG/FMCG'}
 MEETING TYPE: ${type}
 MEETING DATE: ${date}
 FA MODULES DISCUSSED: ${modules || 'Not specified'}
 ATTENDEES (CLIENT): ${attendeesClient || 'Not specified'}
 ATTENDEES (FIELDASSIST): ${attendeesFa || 'Not specified'}
-ACCOUNT HEALTH (SKAM): ${skamData ? (skamData['SKAM Score'] || skamData.skamScore || 'Not available') : 'Not available'}/100
-OPEN PIPELINE: ${pip.length ? pip.map(p => (p['Product/Modules']||p.products||'Module') + ' — ₹' + Number(p['Potential MRR (₹)']||p.potentialMrr||0).toLocaleString('en-IN')).join(', ') : 'None'}
 
 --- MEETING CONTENT (transcript / notes / summary) ---
 ${transcript}
 ---
 
-Generate the full MoM. Value-engineer every discussion point. Be specific — use actual names, numbers, and context from the content above. Do not invent numbers that aren't in the transcript.`;
+Generate the MoM. Keep discussion points crisp — one sentence each, outcome-focused. Use actual names, numbers, and context from the content above. Do not invent anything not in the transcript.`;
 
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
