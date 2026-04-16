@@ -420,12 +420,76 @@
         <div class="card"><div class="card-title">CSM Pipeline Contribution</div><canvas id="chart-csm-pipeline" style="max-height:180px;"></canvas></div>
       </div>
       <!-- ACCOUNTS TABLE -->
-      <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--off-white);padding:4px;border-radius:10px;width:fit-content;">
-        <div class="tab active" onclick="filterGrowthDive('all',this)">All Flagged</div>
-        <div class="tab" onclick="filterGrowthDive('High',this)">High Growth</div>
-        <div class="tab" onclick="filterGrowthDive('Medium',this)">Medium Growth</div>
-        <div class="tab" onclick="filterGrowthDive('Low',this)">Low Growth</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <div style="display:flex;gap:4px;background:var(--off-white);padding:4px;border-radius:10px;">
+          <div class="tab active" onclick="filterGrowthDive('all',this)">All Flagged</div>
+          <div class="tab" onclick="filterGrowthDive('High',this)">High Growth</div>
+          <div class="tab" onclick="filterGrowthDive('Medium',this)">Medium Growth</div>
+          <div class="tab" onclick="filterGrowthDive('Low',this)">Low Growth</div>
+        </div>
+        <button onclick="toggleGdSkamFilter()" class="btn btn-secondary" style="font-size:11px;" id="gd-skam-filter-btn">⚙ SKAM Filter</button>
       </div>
+
+      <!-- SKAM DIMENSION FILTER PANEL -->
+      <div id="gd-skam-filter-panel" style="display:none;background:white;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);margin-bottom:12px;">Filter by SKAM Dimensions — combine any number of conditions</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
+
+          <div style="background:var(--off-white);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--navy);margin-bottom:6px;">SKAM Score (overall)</div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <select id="gd-f-skam-op" onchange="applyGdSkamFilter()" style="padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;background:white;flex:1;"><option value="">—</option><option value="gte">≥</option><option value="lte">≤</option><option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option></select>
+              <input type="number" id="gd-f-skam-val" oninput="applyGdSkamFilter()" placeholder="70" style="padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;width:55px;outline:none;">
+            </div>
+          </div>
+
+          <div style="background:var(--off-white);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--text-mid);margin-bottom:6px;">Relationship Coverage (RC)</div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <select id="gd-f-rc-op" onchange="applyGdSkamFilter()" style="padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;background:white;flex:1;"><option value="">—</option><option value="gte">≥</option><option value="lte">≤</option><option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option></select>
+              <input type="number" id="gd-f-rc-val" oninput="applyGdSkamFilter()" placeholder="3" style="padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;width:55px;outline:none;">
+            </div>
+          </div>
+
+          <div style="background:var(--off-white);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--text-mid);margin-bottom:6px;">Solution Depth (SD)</div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <select id="gd-f-sd-op" onchange="applyGdSkamFilter()" style="padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;background:white;flex:1;"><option value="">—</option><option value="gte">≥</option><option value="lte">≤</option><option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option></select>
+              <input type="number" id="gd-f-sd-val" oninput="applyGdSkamFilter()" placeholder="3" style="padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;width:55px;outline:none;">
+            </div>
+          </div>
+
+          <div style="background:var(--off-white);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--text-mid);margin-bottom:6px;">Competitive Positioning (CP)</div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <select id="gd-f-cp-op" onchange="applyGdSkamFilter()" style="padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;background:white;flex:1;"><option value="">—</option><option value="gte">≥</option><option value="lte">≤</option><option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option></select>
+              <input type="number" id="gd-f-cp-val" oninput="applyGdSkamFilter()" placeholder="3" style="padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;width:55px;outline:none;">
+            </div>
+          </div>
+
+          <div style="background:var(--off-white);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--text-mid);margin-bottom:6px;">Value Perception (VP)</div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <select id="gd-f-vp-op" onchange="applyGdSkamFilter()" style="padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;background:white;flex:1;"><option value="">—</option><option value="gte">≥</option><option value="lte">≤</option><option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option></select>
+              <input type="number" id="gd-f-vp-val" oninput="applyGdSkamFilter()" placeholder="3" style="padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;width:55px;outline:none;">
+            </div>
+          </div>
+
+          <div style="background:var(--off-white);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--text-mid);margin-bottom:6px;">Executive Sponsorship (ES)</div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <select id="gd-f-es-op" onchange="applyGdSkamFilter()" style="padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;background:white;flex:1;"><option value="">—</option><option value="gte">≥</option><option value="lte">≤</option><option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option></select>
+              <input type="number" id="gd-f-es-val" oninput="applyGdSkamFilter()" placeholder="3" style="padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;width:55px;outline:none;">
+            </div>
+          </div>
+
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:11px;color:var(--text-mid);" id="gd-filter-summary"></div>
+          <button onclick="clearGdSkamFilter()" class="btn btn-secondary" style="font-size:11px;">✕ Clear All</button>
+        </div>
+      </div>
+
       <div class="card"><div id="gd-table"></div></div>
     </div>
   </div>
@@ -698,7 +762,69 @@
   <!-- ═══ ALL ACCOUNTS ═══ -->
   <div id="page-accounts-list" class="page">
     <div class="page-header"><div><h1>All Accounts</h1><p>Master view — click Edit to update details or mark churned</p></div><button class="btn btn-secondary" onclick="fetchCentralData().then(loadAccountsList)">↻ Refresh</button></div>
-    <div class="page-content"><div class="card"><div class="table-wrap"><div id="accounts-list-content"><div class="empty-state"><div class="icon">⏳</div><p>Loading...</p></div></div></div></div></div>
+    <div class="page-content">
+
+      <!-- FILTER BAR -->
+      <div class="card" style="margin-bottom:14px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <input type="text" id="acc-f-name" placeholder="🔍 Company name..." oninput="applyAccountFilters()"
+            style="padding:7px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;flex:1;min-width:130px;outline:none;">
+          <input type="text" id="acc-f-hq" placeholder="HQ / City..." oninput="applyAccountFilters()"
+            style="padding:7px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;width:120px;outline:none;">
+          <select id="acc-f-am" onchange="applyAccountFilters()"
+            style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
+            <option value="">All AMs</option>
+            <option>Swapnil Nawani</option><option>Vinay Kumar</option><option>Shivangi Nagarkoti</option>
+            <option>Khushi Mahajan</option><option>Abhishek Singh Jadaon</option><option>Hamza</option>
+            <option>Vaishali Mishra</option><option>Rushikesh</option><option>Suvarna</option>
+            <option>Manik Bedi</option><option>Vatsal Khosla</option><option>Upasana Negi</option>
+            <option>Tushar Rochlani</option><option>Charit Chopra</option>
+          </select>
+          <select id="acc-f-csm" onchange="applyAccountFilters()"
+            style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
+            <option value="">All CSMs</option>
+            <option>Vaishali Uniyal</option><option>Bhawana Malinda</option>
+            <option>Kanika Tandon</option><option>Hardeep Singh</option>
+          </select>
+          <select id="acc-f-status" onchange="applyAccountFilters()"
+            style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
+            <option value="">All Statuses</option>
+            <option>Active</option><option>At Risk</option><option>Churned</option>
+          </select>
+          <select id="acc-f-ob" onchange="applyAccountFilters()"
+            style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
+            <option value="">All Onboarding</option>
+            <option>Not Started</option><option>In Progress</option><option>Live</option>
+          </select>
+          <select id="acc-f-risk" onchange="applyAccountFilters()"
+            style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
+            <option value="">All Risk</option>
+            <option value="Yes">⚠ Risk Flagged</option><option value="No">Clear</option>
+          </select>
+          <select id="acc-f-growth" onchange="applyAccountFilters()"
+            style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
+            <option value="">All Growth</option>
+            <option>High</option><option>Medium</option><option>Low</option>
+          </select>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span style="font-size:11px;color:var(--text-mid);white-space:nowrap;">SKAM</span>
+            <select id="acc-f-skam-op" onchange="applyAccountFilters()"
+              style="padding:7px 7px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
+              <option value="">—</option>
+              <option value="gte">≥</option><option value="lte">≤</option>
+              <option value="gt">&gt;</option><option value="lt">&lt;</option>
+              <option value="eq">=</option>
+            </select>
+            <input type="number" id="acc-f-skam-val" placeholder="50" oninput="applyAccountFilters()"
+              style="padding:7px 9px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;width:60px;outline:none;">
+          </div>
+          <button onclick="clearAccountFilters()" class="btn btn-secondary" style="font-size:11px;padding:6px 12px;white-space:nowrap;">✕ Clear</button>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text-mid);" id="acc-filter-summary"></div>
+      </div>
+
+      <div class="card"><div class="table-wrap"><div id="accounts-list-content"><div class="empty-state"><div class="icon">⏳</div><p>Loading...</p></div></div></div></div>
+    </div>
   </div>
 
   <!-- ═══ PIPELINE VIEW ═══ -->
@@ -2177,27 +2303,75 @@ function renderMeetingRecords() {
       try { actionables = JSON.parse(r['Actionables'] || r.actionables || '[]'); } catch(e) {}
       const pending = actionables.filter(a => a.status !== 'Done').length;
       const done = actionables.filter(a => a.status === 'Done').length;
-      return `<div style="background:white;border:1px solid var(--border);border-radius:10px;padding:18px;box-shadow:var(--card-shadow);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="display:flex;align-items:center;gap:12px;">
+      const cardKey = encodeURIComponent((r['Timestamp']||r.timestamp||'')+(r['Account Name']||r.account||''));
+      const attendeesClient = r['Attendees Client'] || r.attendeesClient || '';
+      const attendeesFa = r['Attendees FA'] || r.attendeesFa || '';
+      const loggedBy = r['Logged By'] || r.loggedBy || '';
+      return `<div style="background:white;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--card-shadow);">
+        <!-- CARD HEADER (always visible) -->
+        <div style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
             <strong style="font-size:14px;">${acc}</strong>
             <span class="badge badge-blue">${type}</span>
             <span style="font-size:12px;color:var(--text-light);">${date}</span>
+            ${pending > 0 ? `<span class="badge badge-amber" style="font-size:10px;">${pending} pending</span>` : done > 0 ? `<span class="badge badge-green" style="font-size:10px;">✓ All done</span>` : ''}
           </div>
-          <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
             ${nextDate ? `<span style="font-size:11px;color:var(--text-light);">Next: ${nextDate}</span>` : ''}
-            <button class="btn-sm btn-edit" onclick="getAISuggestions('${encodeURIComponent(r['Timestamp']||r.timestamp||'')}','${encodeURIComponent(r['Account Name']||r.account||'')}')">✦ AI Suggestions</button>
+            <button class="btn-sm" style="background:var(--off-white);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;"
+              onclick="toggleMrCard('mrcard-${cardKey}')">▾ Details</button>
+            <button class="btn-sm btn-edit" onclick="getAISuggestions('${encodeURIComponent(r['Timestamp']||r.timestamp||'')}','${encodeURIComponent(r['Account Name']||r.account||'')}')">✦ AI</button>
           </div>
         </div>
-        ${notes ? `<div style="font-size:12px;color:var(--text-mid);margin-bottom:10px;line-height:1.6;">${notes.substring(0,200)}${notes.length>200?'...':''}</div>` : ''}
-        ${actionables.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;">
-          ${actionables.map(a => `<div style="background:${a.status==='Done'?'#EAFAF1':'#FEF9E7'};border:1px solid ${a.status==='Done'?'#86efac':'#fbbf24'};border-radius:6px;padding:4px 10px;font-size:11px;">
-            ${a.action.substring(0,50)} ${a.owner?'· '+a.owner:''} ${a.due?'· '+a.due:''}
-            <span style="margin-left:4px;font-weight:600;color:${a.status==='Done'?'var(--green)':'var(--amber)'};">${a.status||'Pending'}</span>
-          </div>`).join('')}
-        </div>` : ''}
-        <div id="ai-suggestions-${encodeURIComponent((r['Timestamp']||r.timestamp||'')+(r['Account Name']||r.account||''))}" style="display:none;margin-top:12px;"></div>
+
+        <!-- EXPANDED DETAILS (hidden by default) -->
+        <div id="mrcard-${cardKey}" style="display:none;border-top:1px solid var(--border);">
+          <!-- Attendees + Meta row -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--border);">
+            <div style="padding:10px 16px;border-right:1px solid var(--border);">
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:4px;">Client Attendees</div>
+              <div style="font-size:12px;color:var(--text-dark);">${attendeesClient||'—'}</div>
+            </div>
+            <div style="padding:10px 16px;border-right:1px solid var(--border);">
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:4px;">FA Attendees</div>
+              <div style="font-size:12px;color:var(--text-dark);">${attendeesFa||'—'}</div>
+            </div>
+            <div style="padding:10px 16px;">
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:4px;">Logged By</div>
+              <div style="font-size:12px;color:var(--text-dark);">${loggedBy||'—'}</div>
+            </div>
+          </div>
+          <!-- Full notes -->
+          ${notes ? `<div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:6px;">Meeting Notes</div>
+            <div style="font-size:12px;color:var(--text-dark);line-height:1.7;white-space:pre-wrap;">${notes}</div>
+          </div>` : ''}
+          <!-- Full actionables table -->
+          ${actionables.length ? `<div style="padding:12px 16px;">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:8px;">Actionables (${actionables.length})</div>
+            <table style="width:100%;font-size:12px;border-collapse:collapse;">
+              <thead><tr style="background:var(--off-white);">
+                <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid);">Action</th>
+                <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid);">Owner</th>
+                <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid);">Due</th>
+                <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid);">Status</th>
+              </tr></thead>
+              <tbody>
+                ${actionables.map(a=>`<tr style="border-top:1px solid var(--border);">
+                  <td style="padding:7px 10px;color:var(--text-dark);">${a.action}</td>
+                  <td style="padding:7px 10px;color:var(--text-mid);">${a.owner||'—'}</td>
+                  <td style="padding:7px 10px;${a.due&&new Date(a.due)<new Date()?'color:var(--red);font-weight:600;':''}">${a.due||'—'}</td>
+                  <td style="padding:7px 10px;"><span class="badge ${a.status==='Done'?'badge-green':'badge-amber'}">${a.status||'Pending'}</span></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>` : `<div style="padding:12px 16px;font-size:12px;color:var(--text-light);">No actionables recorded for this meeting.</div>`}
+          <!-- AI suggestions panel -->
+          <div id="ai-suggestions-${cardKey}" style="display:none;padding:12px 16px;border-top:1px solid var(--border);"></div>
+        </div>
       </div>`;
+    
+  </div>`;
     }).join('')}
   </div>`;
 }
@@ -2206,35 +2380,143 @@ function renderOpenActionables() {
   const el = document.getElementById('mr-open-actionables');
   const u = getCurrentUser();
   const role = getUserRole();
-  const allActionables = [];
+
+  // Build list of meetings that have open actionables
+  let meetings = [];
   meetingReviewsData.forEach(r => {
     try {
       const acts = JSON.parse(r['Actionables'] || r.actionables || '[]');
-      acts.filter(a => a.status !== 'Done').forEach(a => allActionables.push({
-        ...a,
-        account: r['Account Name'] || r.account,
-        meetingDate: r['Review Date'] || r.reviewDate,
-        meetingType: r['Meeting Type'] || r.meetingType
-      }));
+      const open = acts.filter(a => a.status !== 'Done');
+      if (!open.length) return;
+      const account = r['Account Name'] || r.account || '';
+      const ts = r['Timestamp'] || r.timestamp || '';
+      meetings.push({
+        ts,
+        account,
+        meetingDate: r['Review Date'] || r.reviewDate || '',
+        meetingType: r['Meeting Type'] || r.meetingType || '',
+        allActs: acts,        // full array (needed for update)
+        openActs: open        // pending only (for display)
+      });
     } catch(e) {}
   });
-  let visible = allActionables;
+
+  // Role filter
   if (role === 'csm') {
-    const myAccs = (centralData.accounts || []).filter(a => (a['CSM'] || a.csm) === u).map(a => a['Company Name'] || a.company);
-    visible = allActionables.filter(a => myAccs.includes(a.account));
+    const myAccs = (centralData.accounts || []).filter(a => (a['CSM']||a.csm) === u).map(a => a['Company Name']||a.company);
+    meetings = meetings.filter(m => myAccs.includes(m.account));
   }
-  visible.sort((a, b) => (a.due || '9999') > (b.due || '9999') ? 1 : -1);
-  if (!visible.length) { el.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>No open actionables — all done!</p></div>'; return; }
-  el.innerHTML = `<div style="font-size:13px;color:var(--text-mid);padding:0 0 14px;">${visible.length} open actionable${visible.length!==1?'s':''}</div>
-  <table><thead><tr><th>Account</th><th>Actionable</th><th>Owner</th><th>Due Date</th><th>From Meeting</th><th>Status</th></tr></thead><tbody>
-  ${visible.map(a => {
-    const isOverdue = a.due && new Date(a.due) < new Date();
-    return `<tr><td><strong>${a.account}</strong></td><td>${a.action}</td><td>${a.owner||'—'}</td>
-    <td><span style="color:${isOverdue?'var(--red)':'var(--text-dark)'};font-weight:${isOverdue?'600':'400'}">${a.due||'—'}${isOverdue?' ⚠':''}</span></td>
-    <td>${a.meetingDate} · ${a.meetingType}</td>
-    <td><span class="badge badge-amber">Pending</span></td></tr>`;
-  }).join('')}
-  </tbody></table>`;
+
+  // Sort by earliest due date within each meeting
+  meetings.sort((a, b) => {
+    const aMin = a.openActs.map(x=>x.due||'9999').sort()[0];
+    const bMin = b.openActs.map(x=>x.due||'9999').sort()[0];
+    return aMin > bMin ? 1 : -1;
+  });
+
+  const totalOpen = meetings.reduce((s, m) => s + m.openActs.length, 0);
+
+  if (!meetings.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>No open actionables — all done!</p></div>';
+    return;
+  }
+
+  el.innerHTML = `<div style="font-size:13px;color:var(--text-mid);padding:0 0 14px;">
+    <strong>${totalOpen}</strong> open actionable${totalOpen!==1?'s':''} across <strong>${meetings.length}</strong> meeting${meetings.length!==1?'s':''}
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    ${meetings.map(m => {
+      const tsEnc = encodeURIComponent(m.ts);
+      const accEnc = encodeURIComponent(m.account);
+      return `<div style="background:white;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <!-- Meeting header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--off-white);border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <strong style="font-size:13px;color:var(--navy);">${m.account}</strong>
+            <span class="badge badge-blue">${m.meetingType}</span>
+            <span style="font-size:11px;color:var(--text-light);">${m.meetingDate}</span>
+            <span class="badge badge-amber" style="font-size:10px;">${m.openActs.length} pending</span>
+          </div>
+          <button onclick="markAllMeetingDone('${tsEnc}','${accEnc}')"
+            style="padding:4px 12px;background:var(--navy);border:none;border-radius:6px;font-family:inherit;font-size:11px;font-weight:600;color:white;cursor:pointer;white-space:nowrap;">
+            ✓ Close All
+          </button>
+        </div>
+        <!-- Actionables -->
+        <div style="display:flex;flex-direction:column;gap:0;">
+          ${m.openActs.map((a, i) => {
+            // Find real index in allActs array
+            const realIdx = m.allActs.findIndex(x => x.action === a.action && x.owner === a.owner && x.due === a.due && x.status !== 'Done');
+            const isOverdue = a.due && new Date(a.due) < new Date();
+            return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);${i===m.openActs.length-1?'border-bottom:none;':''}">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;color:var(--text-dark);line-height:1.4;">${a.action}</div>
+                <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+                  ${a.owner ? `<span style="font-size:11px;color:var(--text-mid);">👤 ${a.owner}</span>` : ''}
+                  <span style="font-size:11px;color:${isOverdue?'var(--red)':'var(--text-light)'};font-weight:${isOverdue?'600':'400'};">
+                    📅 ${a.due||'No due date'}${isOverdue?' ⚠ Overdue':''}
+                  </span>
+                </div>
+              </div>
+              <button onclick="markActionableDone('${tsEnc}','${accEnc}',${realIdx})"
+                style="padding:4px 11px;background:var(--green-bg);border:1px solid var(--green);border-radius:6px;font-family:inherit;font-size:11px;font-weight:600;color:var(--green);cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                ✓ Done
+              </button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ── Mark a single actionable done ──
+async function markActionableDone(tsEnc, accEnc, realIdx) {
+  const ts = decodeURIComponent(tsEnc);
+  const account = decodeURIComponent(accEnc);
+  const r = meetingReviewsData.find(x => (x['Timestamp']||x.timestamp||'') === ts && (x['Account Name']||x.account||'') === account);
+  if (!r) return;
+  let acts = [];
+  try { acts = JSON.parse(r['Actionables'] || r.actionables || '[]'); } catch(e) { return; }
+  if (!acts[realIdx]) return;
+  acts[realIdx].status = 'Done';
+  const newJson = JSON.stringify(acts);
+  // Update local data immediately
+  if (r['Actionables'] !== undefined) r['Actionables'] = newJson;
+  else r.actionables = newJson;
+  // Sync to sheet
+  await syncToSheets({ type: 'update_meeting_actionables', timestamp: ts, account, actionables: newJson });
+  renderOpenActionables();
+  showToast('✓ Actionable marked done');
+}
+
+// ── Mark ALL actionables for a meeting done ──
+async function markAllMeetingDone(tsEnc, accEnc) {
+  const ts = decodeURIComponent(tsEnc);
+  const account = decodeURIComponent(accEnc);
+  const r = meetingReviewsData.find(x => (x['Timestamp']||x.timestamp||'') === ts && (x['Account Name']||x.account||'') === account);
+  if (!r) return;
+  let acts = [];
+  try { acts = JSON.parse(r['Actionables'] || r.actionables || '[]'); } catch(e) { return; }
+  acts.forEach(a => { a.status = 'Done'; });
+  const newJson = JSON.stringify(acts);
+  if (r['Actionables'] !== undefined) r['Actionables'] = newJson;
+  else r.actionables = newJson;
+  await syncToSheets({ type: 'update_meeting_actionables', timestamp: ts, account, actionables: newJson });
+  renderOpenActionables();
+  showToast('✓ All actionables closed for this meeting');
+}
+
+// ── MEETING CARD EXPAND/COLLAPSE ──
+function toggleMrCard(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  // Update button text
+  const card = el.closest('div[style*="background:white"]') || el.parentElement;
+  const btn = card?.querySelector('button[onclick*="toggleMrCard"]');
+  if(btn) btn.textContent = isOpen ? '▾ Details' : '▴ Details';
 }
 
 // ── AI NEXT BEST ACTION (Change 4) ──
@@ -4014,13 +4296,71 @@ function loadGrowthDive(){
   renderGrowthDiveTable(growthDiveFilter);
 }
 function filterGrowthDive(flag,el){growthDiveFilter=flag;document.querySelectorAll('#page-growth-dive .tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');renderGrowthDiveTable(flag);}
+
+function toggleGdSkamFilter(){
+  const panel=document.getElementById('gd-skam-filter-panel');
+  const btn=document.getElementById('gd-skam-filter-btn');
+  if(!panel)return;
+  const open=panel.style.display!=='none';
+  panel.style.display=open?'none':'block';
+  if(btn)btn.textContent=open?'⚙ SKAM Filter':'✕ Hide Filter';
+}
+
+function applyGdSkamFilter(){renderGrowthDiveTable(growthDiveFilter);}
+
+function clearGdSkamFilter(){
+  ['skam','rc','sd','cp','vp','es'].forEach(k=>{
+    const opEl=document.getElementById('gd-f-'+k+'-op');
+    const valEl=document.getElementById('gd-f-'+k+'-val');
+    if(opEl)opEl.value='';
+    if(valEl)valEl.value='';
+  });
+  renderGrowthDiveTable(growthDiveFilter);
+}
+
+function getGdSkamFilters(){
+  const dims=['skam','rc','sd','cp','vp','es'];
+  return dims.map(k=>{
+    const op=document.getElementById('gd-f-'+k+'-op')?.value||'';
+    const val=document.getElementById('gd-f-'+k+'-val')?.value;
+    const num=val!==''&&val!=null?Number(val):null;
+    return{k,op,num};
+  }).filter(f=>f.op&&f.num!==null);
+}
 function renderGrowthDiveTable(flag){
   const allAcc=centralData.accounts||[],ops=centralData.operational||[],pip=centralData.pipeline||[];
   const activeAcc=allAcc.filter(a=>(a['Account Status']||'Active')!=='Churned');
   const ls=getLatestSkam(ops);
   let entries=Object.values(ls);
   if(flag!=='all')entries=entries.filter(o=>(o['Growth Flag']||o.growthFlag)===flag);
-  if(!entries.length){document.getElementById('gd-table').innerHTML='<div class="empty-state"><div class="icon">🚀</div><p>No accounts with this flag.</p></div>';return;}
+
+  // Apply SKAM dimension filters
+  const skamFilters=getGdSkamFilters();
+  const dimMap={skam:'SKAM Score',rc:'Relationship Coverage',sd:'Solution Depth',cp:'Competitive Positioning',vp:'Value Perception',es:'Executive Sponsorship'};
+  const dimFallback={skam:'skamScore',rc:'rc',sd:'sd',cp:'cp',vp:'vp',es:'es'};
+  if(skamFilters.length){
+    entries=entries.filter(o=>{
+      return skamFilters.every(f=>{
+        const val=Number(o[dimMap[f.k]]||o[dimFallback[f.k]]||0);
+        if(f.op==='gte') return val>=f.num;
+        if(f.op==='lte') return val<=f.num;
+        if(f.op==='gt')  return val>f.num;
+        if(f.op==='lt')  return val<f.num;
+        if(f.op==='eq')  return val===f.num;
+        return true;
+      });
+    });
+    // Update summary
+    const opLabel={gte:'≥',lte:'≤',gt:'>',lt:'<',eq:'='};
+    const dimLabel={skam:'SKAM',rc:'RC',sd:'SD',cp:'CP',vp:'VP',es:'ES'};
+    const summaryEl=document.getElementById('gd-filter-summary');
+    if(summaryEl)summaryEl.innerHTML=`<strong>${entries.length}</strong> account${entries.length!==1?'s':''} match · `+skamFilters.map(f=>`<span style="background:var(--light-blue);color:var(--blue);padding:1px 7px;border-radius:8px;margin-right:3px;font-size:11px;">${dimLabel[f.k]} ${opLabel[f.op]} ${f.num}</span>`).join('');
+  } else {
+    const summaryEl=document.getElementById('gd-filter-summary');
+    if(summaryEl)summaryEl.innerHTML='';
+  }
+
+  if(!entries.length){document.getElementById('gd-table').innerHTML='<div class="empty-state"><div class="icon">🚀</div><p>No accounts match the current filters.</p></div>';return;}
   document.getElementById('gd-table').innerHTML=`<table><thead><tr><th>Account</th><th>Flag</th><th>SKAM</th><th>Sol.Depth</th><th>Current MRR</th><th>Open Pipeline</th><th>Stage(s)</th><th>Pipeline Age</th><th>AM</th><th>CSM</th></tr></thead><tbody>${entries.sort((a,b)=>{const o={High:0,Medium:1,Low:2};return o[a['Growth Flag']||a.growthFlag]-o[b['Growth Flag']||b.growthFlag];}).map(o=>{const n=o['Account Name']||o.account;const acc=activeAcc.find(a=>(a['Company Name']||a.company)===n);const mrr=acc?Number(acc['Current MRR (₹)']||acc.mrr||0):0;const accPip=pip.filter(p=>(p['Account Name']||p.account)===n&&!['Closed Won','Closed Lost'].includes(p['Opportunity Stage']||p.stage));const pipMrr=accPip.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0);const stages=[...new Set(accPip.map(p=>p['Opportunity Stage']||p.stage))];const maxAge=accPip.length?Math.max(...accPip.map(p=>daysSince(p['Timestamp']||p.timestamp))):null;const gf=o['Growth Flag']||o.growthFlag;const s=Number(o['SKAM Score']||o.skamScore);return`<tr class="${maxAge>30?'stale-row':''}"><td><strong>${n}</strong></td><td><span class="badge ${gf==='High'?'badge-green':gf==='Medium'?'badge-amber':'badge-red'}">${gf}</span></td><td><span class="badge ${s>=70?'badge-green':s>=50?'badge-amber':'badge-red'}">${s}</span></td><td>${o['Solution Depth']||o.sd}</td><td>₹${mrr.toLocaleString('en-IN')}</td><td>${pipMrr?'<strong>'+fmtMrrFull(pipMrr)+'</strong>':'<span style="color:var(--text-light)">No pipeline</span>'}</td><td>${stages.length?stages.map(st=>`<span class="badge badge-blue" style="font-size:10px;margin:1px;">${st}</span>`).join(''):'—'}</td><td>${maxAge!==null?`<span class="${maxAge>30?'age-stale':maxAge>14?'age-warn':'age-fresh'}">${maxAge}d</span>`:'—'}</td><td>${acc?(acc['Account Manager']||acc.am||'—'):'—'}</td><td>${acc?(acc['CSM']||acc.csm||'—'):'—'}</td></tr>`;}).join('')}</tbody></table>`;
 }
 
@@ -4040,11 +4380,83 @@ function loadChurnDive(){
 
 // ── ALL ACCOUNTS ──
 function loadAccountsList(){
+  applyAccountFilters();
+}
+
+function applyAccountFilters(){
   const el=document.getElementById('accounts-list-content');
   const allAcc=centralData.accounts||[],ls=getLatestSkam(centralData.operational||[]);
-  const acc=filterAccountsByUser(allAcc);
-  if(!acc.length){el.innerHTML='<div class="empty-state"><div class="icon">🏢</div><p>No accounts found.</p></div>';return;}
+  let acc=filterAccountsByUser(allAcc);
+
+  // Read filter values
+  const fName=(document.getElementById('acc-f-name')?.value||'').toLowerCase().trim();
+  const fHq=(document.getElementById('acc-f-hq')?.value||'').toLowerCase().trim();
+  const fAm=document.getElementById('acc-f-am')?.value||'';
+  const fCsm=document.getElementById('acc-f-csm')?.value||'';
+  const fStatus=document.getElementById('acc-f-status')?.value||'';
+  const fOb=document.getElementById('acc-f-ob')?.value||'';
+  const fRisk=document.getElementById('acc-f-risk')?.value||'';
+  const fGrowth=document.getElementById('acc-f-growth')?.value||'';
+  const fSkamOp=document.getElementById('acc-f-skam-op')?.value||'';
+  const fSkamVal=document.getElementById('acc-f-skam-val')?.value;
+  const fSkamNum=fSkamVal!==''&&fSkamVal!=null?Number(fSkamVal):null;
+
+  // Apply filters
+  if(fName) acc=acc.filter(a=>(a['Company Name']||a.company||'').toLowerCase().includes(fName));
+  if(fHq)   acc=acc.filter(a=>(a['Client HQ']||a.hq||'').toLowerCase().includes(fHq));
+  if(fAm)   acc=acc.filter(a=>(a['Account Manager']||a.am||'')===fAm);
+  if(fCsm)  acc=acc.filter(a=>(a['CSM']||a.csm||'')===fCsm);
+  if(fStatus) acc=acc.filter(a=>(a['Account Status']||a.accountStatus||'Active')===fStatus);
+  if(fOb)   acc=acc.filter(a=>(a['Onboarding Status']||a.onboarding||'')===fOb);
+  if(fRisk||fGrowth||fSkamOp) acc=acc.filter(a=>{
+    const n=a['Company Name']||a.company;
+    const sk=ls[n];
+    if(fRisk&&(!sk||(sk['Risk Flag']||sk.riskFlag)!==fRisk)) return false;
+    if(fGrowth&&(!sk||(sk['Growth Flag']||sk.growthFlag)!==fGrowth)) return false;
+    if(fSkamOp&&fSkamNum!==null){
+      const s=sk?Number(sk['SKAM Score']||sk.skamScore):null;
+      if(s===null) return false;
+      if(fSkamOp==='gte'&&!(s>=fSkamNum)) return false;
+      if(fSkamOp==='lte'&&!(s<=fSkamNum)) return false;
+      if(fSkamOp==='gt'&&!(s>fSkamNum))   return false;
+      if(fSkamOp==='lt'&&!(s<fSkamNum))   return false;
+      if(fSkamOp==='eq'&&s!==fSkamNum)    return false;
+    }
+    return true;
+  });
+
+  // Filter summary
+  const activeFilters=[];
+  if(fName)    activeFilters.push(`Name: "${fName}"`);
+  if(fHq)      activeFilters.push(`HQ: "${fHq}"`);
+  if(fAm)      activeFilters.push(`AM: ${fAm}`);
+  if(fCsm)     activeFilters.push(`CSM: ${fCsm}`);
+  if(fStatus)  activeFilters.push(`Status: ${fStatus}`);
+  if(fOb)      activeFilters.push(`Onboarding: ${fOb}`);
+  if(fRisk)    activeFilters.push(`Risk: ${fRisk==='Yes'?'Flagged':'Clear'}`);
+  if(fGrowth)  activeFilters.push(`Growth: ${fGrowth}`);
+  if(fSkamOp&&fSkamNum!==null) activeFilters.push(`SKAM ${fSkamOp==='gte'?'≥':fSkamOp==='lte'?'≤':fSkamOp==='gt'?'>':fSkamOp==='lt'?'<':'='} ${fSkamNum}`);
+
+  const summaryEl=document.getElementById('acc-filter-summary');
+  if(summaryEl){
+    if(activeFilters.length)
+      summaryEl.innerHTML=`<span style="color:var(--navy);font-weight:600;">${acc.length} result${acc.length!==1?'s':''}</span> · Filters: ${activeFilters.map(f=>`<span style="background:var(--light-blue);color:var(--blue);padding:1px 7px;border-radius:8px;margin-right:4px;">${f}</span>`).join('')}`;
+    else
+      summaryEl.innerHTML='';
+  }
+
+  if(!acc.length){
+    el.innerHTML=`<div class="empty-state"><div class="icon">🏢</div><p>${activeFilters.length?'No accounts match your filters.':'No accounts found.'}</p></div>`;
+    return;
+  }
+
   el.innerHTML=`<div style="padding:0 0 14px;font-size:13px;color:var(--text-mid);">Showing <strong>${acc.length}</strong> of ${allAcc.length} accounts ${getViewBadge()}</div><table><thead><tr><th>Company</th><th>HQ</th><th>MRR</th><th>AM</th><th>CSM</th><th>Onboarding</th><th>Status</th><th>SKAM</th><th>Risk</th><th>Growth</th><th></th></tr></thead><tbody>${acc.map((a)=>{const n=a['Company Name']||a.company,sk=ls[n],s=sk?Number(sk['SKAM Score']||sk.skamScore):null,ob=a['Onboarding Status']||a.onboarding,st=a['Account Status']||a.accountStatus||'Active';const realIdx=(centralData.accounts||[]).indexOf(a);return`<tr class="${st==='Churned'?'churned-row':''}"><td><strong>${n}</strong></td><td>${a['Client HQ']||a.hq||'—'}</td><td>₹${Number(a['Current MRR (₹)']||a.mrr||0).toLocaleString('en-IN')}</td><td>${a['Account Manager']||a.am||'—'}</td><td>${a['CSM']||a.csm||'—'}</td><td><span class="badge ${ob==='Live'?'badge-green':ob==='In Progress'?'badge-amber':'badge-gray'}">${ob||'—'}</span></td><td><span class="badge ${st==='Churned'?'badge-red':st==='At Risk'?'badge-amber':'badge-green'}">${st}</span></td><td>${s!==null?`<span class="badge ${s>=70?'badge-green':s>=50?'badge-amber':'badge-red'}">${s}</span>`:'<span class="badge badge-gray">—</span>'}</td><td>${sk?`<span class="badge ${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'badge-red':'badge-green'}">${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'⚠ Risk':'Clear'}</span>`:'—'}</td><td>${sk?`<span class="badge ${(sk['Growth Flag']||sk.growthFlag)==='High'?'badge-green':(sk['Growth Flag']||sk.growthFlag)==='Medium'?'badge-amber':'badge-red'}">${sk['Growth Flag']||sk.growthFlag}</span>`:'—'}</td><td><button class="btn-sm btn-edit" onclick="openEditAccount(${realIdx})">Edit</button></td></tr>`;}).join('')}</tbody></table>`;
+}
+
+function clearAccountFilters(){
+  ['acc-f-name','acc-f-hq','acc-f-skam-val'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['acc-f-am','acc-f-csm','acc-f-status','acc-f-ob','acc-f-risk','acc-f-growth','acc-f-skam-op'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  applyAccountFilters();
 }
 
 // ── PIPELINE LIST ──
