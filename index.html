@@ -315,6 +315,48 @@
         </div>
       </div>
 
+      <!-- TOTAL MRR BANNER -->
+      <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:20px 28px;margin-bottom:20px;display:grid;grid-template-columns:auto 1px 1fr 1px 1fr 1px 1fr 1px 1fr;gap:0;align-items:center;box-shadow:var(--card-shadow);">
+        <!-- Main Number -->
+        <div style="padding-right:28px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--text-light);margin-bottom:4px;">Total MRR Under Management</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:40px;color:var(--navy);line-height:1;" id="total-mrr-main">—</div>
+          <div style="font-size:11px;color:var(--text-mid);margin-top:4px;" id="total-mrr-sub">Active accounts · excl. churn</div>
+        </div>
+        <!-- Divider -->
+        <div style="width:1px;height:48px;background:var(--border);margin:0 24px;"></div>
+        <!-- Base MRR -->
+        <div style="padding:0 24px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:4px;">Base MRR</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy);" id="total-mrr-base">—</div>
+          <div style="font-size:11px;color:var(--text-mid);margin-top:2px;">Current billing across actives</div>
+        </div>
+        <!-- Divider -->
+        <div style="width:1px;height:48px;background:var(--border);margin:0 24px;"></div>
+        <!-- Closed Won added -->
+        <div style="padding:0 24px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:4px;">+ Closed Won (Pending)</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#27AE60;" id="total-mrr-won">—</div>
+          <div style="font-size:11px;color:var(--text-mid);margin-top:2px;">Won, not yet in account MRR</div>
+        </div>
+        <!-- Divider -->
+        <div style="width:1px;height:48px;background:var(--border);margin:0 24px;"></div>
+        <!-- Churn deducted -->
+        <div style="padding:0 24px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:4px;">− Churn Removed</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#E74C3C;" id="total-mrr-churn">—</div>
+          <div style="font-size:11px;color:var(--text-mid);margin-top:2px;" id="total-mrr-churn-sub">Churned accounts</div>
+        </div>
+        <!-- Divider -->
+        <div style="width:1px;height:48px;background:var(--border);margin:0 24px;"></div>
+        <!-- Account count -->
+        <div style="padding:0 0 0 24px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:4px;">Avg MRR / Account</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy);" id="total-mrr-avg">—</div>
+          <div style="font-size:11px;color:var(--text-mid);margin-top:2px;" id="total-mrr-count">—</div>
+        </div>
+      </div>
+
       <!-- STAT CARDS ROW 1 -->
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:12px;">Account Health</div>
       <div class="stats-grid" style="margin-bottom:16px;">
@@ -4121,6 +4163,26 @@ function loadDashboard(){
   document.getElementById('nrr-expansion').textContent='+'+fmtMrr(expansionMrr);
   document.getElementById('nrr-churn').textContent='-'+fmtMrr(churnMrr);
   document.getElementById('nrr-net').textContent=fmtMrr(activeMrr);
+
+  // ── TOTAL MRR UNDER MANAGEMENT ──
+  // activeMrr = sum of Current MRR(₹) for all non-churned accounts (already includes billed expansions)
+  // pendingWonMrr = Closed Won pipeline where MRR Updated = No (expansion not yet pushed to account MRR)
+  // churnMrr = MRR of churned accounts (already excluded from activeMrr)
+  const pendingWonMrr=myPip.filter(p=>(p['Opportunity Stage']||p.stage)==='Closed Won'&&(p['MRR Updated']||p.mrrUpdated)!=='Yes').reduce((s,p)=>s+(Number(p['Actual Realised MRR']||p.realisedMrr||p['Potential MRR (₹)']||p.potentialMrr)||0),0);
+  const totalMrrVal=activeMrr+pendingWonMrr;
+  const myChurnedForTotal=getUserRole()==='leadership'?churnedAcc:filterAccountsByUser(churnedAcc);
+  const churnMrrForTotal=myChurnedForTotal.reduce((s,a)=>s+(Number(a['Current MRR (₹)']||a.mrr)||0),0);
+  const avgMrr=acc.length>0?Math.round(totalMrrVal/acc.length):0;
+
+  const fmtFull=v=>v?'₹'+Number(v).toLocaleString('en-IN'):'₹0';
+  document.getElementById('total-mrr-main').textContent=fmtFull(totalMrrVal);
+  document.getElementById('total-mrr-base').textContent=fmtFull(activeMrr);
+  document.getElementById('total-mrr-won').textContent=pendingWonMrr>0?'+'+fmtFull(pendingWonMrr):'₹0';
+  document.getElementById('total-mrr-churn').textContent=churnMrrForTotal>0?'-'+fmtFull(churnMrrForTotal):'₹0';
+  document.getElementById('total-mrr-churn-sub').textContent=myChurnedForTotal.length+' account'+(myChurnedForTotal.length!==1?'s':'')+' churned';
+  document.getElementById('total-mrr-avg').textContent=avgMrr?fmtFull(avgMrr):'—';
+  document.getElementById('total-mrr-count').textContent=acc.length+' active account'+(acc.length!==1?'s':'');
+  document.getElementById('total-mrr-sub').textContent=acc.length+' active account'+(acc.length!==1?'s':'')+' · excl. '+myChurnedForTotal.length+' churned';
 
   // Stats
   const ls=getLatestSkam(myOps);
