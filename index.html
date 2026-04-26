@@ -3135,203 +3135,7 @@ window.onload=()=>{ setTimeout(selectMom,400); };
 <\/script>
 
 <!-- ══════════════════════════════════════════════════════════ -->
-<!-- MANAGER REVIEW PAGE -->
-<!-- ══════════════════════════════════════════════════════════ -->
-<div class="page" id="page-manager-review">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Manager Review</h1>
-      <p class="page-sub">Weekly execution, operations and growth review — CSM-level drill-down</p>
-    </div>
-  </div>
-  <div class="page-content">
-
-    <!-- ── FILTER BAR ── -->
-    <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--card-shadow)">
-      <div style="display:flex;align-items:center;gap:8px">
-        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">CSM</label>
-        <select id="mr2-csm" onchange="loadManagerReview()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark);min-width:140px">
-          <option value="">All CSMs</option>
-          <option>Vaishali Uniyal</option>
-          <option>Bhawana Malinda</option>
-          <option>Kanika Tandon</option>
-          <option>Hardeep Singh</option>
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">Health</label>
-        <select id="mr2-health" onchange="loadManagerReview()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
-          <option value="">All Accounts</option>
-          <option value="risk">At Risk Only</option>
-          <option value="growth">Growth Flagged</option>
-          <option value="clear">Clear</option>
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">Period</label>
-        <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-          <button onclick="setMr2Period(30,this)" id="mr2-p30" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--navy);color:white">30d</button>
-          <button onclick="setMr2Period(60,this)" id="mr2-p60" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--text-mid)">60d</button>
-          <button onclick="setMr2Period(90,this)" id="mr2-p90" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--text-mid)">90d</button>
-        </div>
-      </div>
-      <div style="margin-left:auto;font-size:11px;color:var(--text-light)" id="mr2-summary">—</div>
-    </div>
-
-    <!-- ── CSM SUMMARY STRIP ── -->
-    <div id="csm-strip-mr2" style="display:none;margin-bottom:20px"></div>
-
-    <!-- ── S1: TEAM PULSE ── -->
-    <div id="mr2-team-pulse-section">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span style="width:3px;height:14px;background:var(--navy);border-radius:2px;display:inline-block"></span>
-        Team Pulse
-        <span style="font-size:10px;font-weight:400;color:var(--text-light);text-transform:none;letter-spacing:0">Click a CSM card to filter the review</span>
-      </div>
-      <div id="mr2-team-pulse" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
-    </div>
-
-    <!-- ── S2: SKAM DIRECTION ── -->
-    <div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
-          <span style="width:3px;height:14px;background:var(--amber);border-radius:2px;display:inline-block"></span>
-          SKAM Direction
-        </div>
-        <div style="display:flex;gap:6px">
-          <select id="mr2-skam-dir" onchange="renderSkamDirection()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
-            <option value="">All</option>
-            <option value="declining">Declining ↓</option>
-            <option value="improving">Improving ↑</option>
-            <option value="stable">Stable →</option>
-            <option value="nodata">No Trend Data</option>
-          </select>
-        </div>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div id="mr2-skam-dir-table" style="overflow-x:auto"></div>
-      </div>
-    </div>
-
-    <!-- ── S3: PIPELINE ACCOUNTABILITY ── -->
-    <div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
-          <span style="width:3px;height:14px;background:var(--green);border-radius:2px;display:inline-block"></span>
-          Pipeline Accountability
-        </div>
-        <div style="display:flex;gap:6px">
-          <select id="mr2-pip-age" onchange="renderPipelineAccountability()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
-            <option value="">All Ages</option>
-            <option value="fresh">Fresh (&lt;30d)</option>
-            <option value="aging">Aging (30–60d)</option>
-            <option value="stale">Stale (60d+)</option>
-          </select>
-          <select id="mr2-pip-stage" onchange="renderPipelineAccountability()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
-            <option value="">All Stages</option>
-            <option>Prospecting</option>
-            <option>Demo Done</option>
-            <option>Proposal Sent</option>
-            <option>Negotiation</option>
-            <option>Delayed Closure</option>
-          </select>
-        </div>
-      </div>
-      <div id="mr2-pip-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px"></div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div id="mr2-pip-table" style="overflow-x:auto"></div>
-      </div>
-    </div>
-
-    <!-- ── S4: REVIEW CADENCE ── -->
-    <div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
-          <span style="width:3px;height:14px;background:var(--red);border-radius:2px;display:inline-block"></span>
-          Review Cadence
-        </div>
-        <select id="mr2-cadence-type" onchange="renderCadence()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
-          <option value="">All Meeting Types</option>
-          <option value="MBR">MBR only</option>
-          <option value="QBR">QBR only</option>
-          <option value="BPR">BPR only</option>
-          <option value="EBR">EBR only</option>
-        </select>
-      </div>
-      <div id="mr2-cadence" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"></div>
-    </div>
-
-    <!-- ── S5: ACTIONABLE CLOSURE ── -->
-    <div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
-          <span style="width:3px;height:14px;background:var(--navy);border-radius:2px;display:inline-block"></span>
-          Actionable Closure
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-mid);cursor:pointer">
-            <input type="checkbox" id="mr2-overdue-only" onchange="renderActionableClosure()"> Overdue only
-          </label>
-          <select id="mr2-act-type" onchange="renderActionableClosure()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
-            <option value="">All Meeting Types</option>
-            <option value="MBR">MBR</option>
-            <option value="QBR">QBR</option>
-            <option value="BPR">BPR</option>
-          </select>
-        </div>
-      </div>
-      <div id="mr2-action-closure"></div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ── DRILL: Account Detail Modal ── -->
-<div id="modal-mr2-account" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:14px;width:760px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
-    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div id="mr2-acc-modal-name" style="font-size:16px;font-weight:700;color:white"></div>
-        <div id="mr2-acc-modal-sub" style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px"></div>
-      </div>
-      <button onclick="closeModal('modal-mr2-account')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-    </div>
-    <div id="mr2-acc-modal-body" style="overflow-y:auto;padding:20px;flex:1"></div>
-    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
-      <button onclick="closeModal('modal-mr2-account')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── DRILL: Pipeline Deal Modal ── -->
-<div id="modal-mr2-deal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:14px;width:620px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
-    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
-      <div id="mr2-deal-modal-title" style="font-size:16px;font-weight:700;color:white"></div>
-      <button onclick="closeModal('modal-mr2-deal')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-    </div>
-    <div id="mr2-deal-modal-body" style="overflow-y:auto;padding:20px;flex:1"></div>
-    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
-      <button onclick="closeModal('modal-mr2-deal')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── DRILL: CSM Actionables Modal ── -->
-<div id="modal-mr2-csm-acts" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:14px;width:780px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
-    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
-      <div id="mr2-csm-acts-title" style="font-size:16px;font-weight:700;color:white"></div>
-      <button onclick="closeModal('modal-mr2-csm-acts')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-    </div>
-    <div id="mr2-csm-acts-body" style="overflow-y:auto;padding:20px;flex:1"></div>
-    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
-      <button onclick="closeModal('modal-mr2-csm-acts')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
-    </div>
-  </div>
-</div>
-
-</body>
+<!-- MANAGER REVIEW PAGE --></body>
 </html>`;
 
   const win = window.open('', '_blank');
@@ -5632,5 +5436,202 @@ function openCsmActsDetail(csmName) {
   openModal('modal-mr2-csm-acts');
 }
 </script>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-manager-review">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manager Review</h1>
+      <p class="page-sub">Weekly execution, operations and growth review — CSM-level drill-down</p>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <!-- ── FILTER BAR ── -->
+    <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--card-shadow)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">CSM</label>
+        <select id="mr2-csm" onchange="loadManagerReview()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark);min-width:140px">
+          <option value="">All CSMs</option>
+          <option>Vaishali Uniyal</option>
+          <option>Bhawana Malinda</option>
+          <option>Kanika Tandon</option>
+          <option>Hardeep Singh</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">Health</label>
+        <select id="mr2-health" onchange="loadManagerReview()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+          <option value="">All Accounts</option>
+          <option value="risk">At Risk Only</option>
+          <option value="growth">Growth Flagged</option>
+          <option value="clear">Clear</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">Period</label>
+        <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <button onclick="setMr2Period(30,this)" id="mr2-p30" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--navy);color:white">30d</button>
+          <button onclick="setMr2Period(60,this)" id="mr2-p60" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--text-mid)">60d</button>
+          <button onclick="setMr2Period(90,this)" id="mr2-p90" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--text-mid)">90d</button>
+        </div>
+      </div>
+      <div style="margin-left:auto;font-size:11px;color:var(--text-light)" id="mr2-summary">—</div>
+    </div>
+
+    <!-- ── CSM SUMMARY STRIP ── -->
+    <div id="csm-strip-mr2" style="display:none;margin-bottom:20px"></div>
+
+    <!-- ── S1: TEAM PULSE ── -->
+    <div id="mr2-team-pulse-section">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <span style="width:3px;height:14px;background:var(--navy);border-radius:2px;display:inline-block"></span>
+        Team Pulse
+        <span style="font-size:10px;font-weight:400;color:var(--text-light);text-transform:none;letter-spacing:0">Click a CSM card to filter the review</span>
+      </div>
+      <div id="mr2-team-pulse" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
+    </div>
+
+    <!-- ── S2: SKAM DIRECTION ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--amber);border-radius:2px;display:inline-block"></span>
+          SKAM Direction
+        </div>
+        <div style="display:flex;gap:6px">
+          <select id="mr2-skam-dir" onchange="renderSkamDirection()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All</option>
+            <option value="declining">Declining ↓</option>
+            <option value="improving">Improving ↑</option>
+            <option value="stable">Stable →</option>
+            <option value="nodata">No Trend Data</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="mr2-skam-dir-table" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- ── S3: PIPELINE ACCOUNTABILITY ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--green);border-radius:2px;display:inline-block"></span>
+          Pipeline Accountability
+        </div>
+        <div style="display:flex;gap:6px">
+          <select id="mr2-pip-age" onchange="renderPipelineAccountability()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All Ages</option>
+            <option value="fresh">Fresh (&lt;30d)</option>
+            <option value="aging">Aging (30–60d)</option>
+            <option value="stale">Stale (60d+)</option>
+          </select>
+          <select id="mr2-pip-stage" onchange="renderPipelineAccountability()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All Stages</option>
+            <option>Prospecting</option>
+            <option>Demo Done</option>
+            <option>Proposal Sent</option>
+            <option>Negotiation</option>
+            <option>Delayed Closure</option>
+          </select>
+        </div>
+      </div>
+      <div id="mr2-pip-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="mr2-pip-table" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- ── S4: REVIEW CADENCE ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--red);border-radius:2px;display:inline-block"></span>
+          Review Cadence
+        </div>
+        <select id="mr2-cadence-type" onchange="renderCadence()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+          <option value="">All Meeting Types</option>
+          <option value="MBR">MBR only</option>
+          <option value="QBR">QBR only</option>
+          <option value="BPR">BPR only</option>
+          <option value="EBR">EBR only</option>
+        </select>
+      </div>
+      <div id="mr2-cadence" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"></div>
+    </div>
+
+    <!-- ── S5: ACTIONABLE CLOSURE ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--navy);border-radius:2px;display:inline-block"></span>
+          Actionable Closure
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-mid);cursor:pointer">
+            <input type="checkbox" id="mr2-overdue-only" onchange="renderActionableClosure()"> Overdue only
+          </label>
+          <select id="mr2-act-type" onchange="renderActionableClosure()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All Meeting Types</option>
+            <option value="MBR">MBR</option>
+            <option value="QBR">QBR</option>
+            <option value="BPR">BPR</option>
+          </select>
+        </div>
+      </div>
+      <div id="mr2-action-closure"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── DRILL: Account Detail Modal ── -->
+<div id="modal-mr2-account" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:14px;width:760px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div id="mr2-acc-modal-name" style="font-size:16px;font-weight:700;color:white"></div>
+        <div id="mr2-acc-modal-sub" style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px"></div>
+      </div>
+      <button onclick="closeModal('modal-mr2-account')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="mr2-acc-modal-body" style="overflow-y:auto;padding:20px;flex:1"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
+      <button onclick="closeModal('modal-mr2-account')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRILL: Pipeline Deal Modal ── -->
+<div id="modal-mr2-deal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:14px;width:620px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div id="mr2-deal-modal-title" style="font-size:16px;font-weight:700;color:white"></div>
+      <button onclick="closeModal('modal-mr2-deal')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="mr2-deal-modal-body" style="overflow-y:auto;padding:20px;flex:1"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
+      <button onclick="closeModal('modal-mr2-deal')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRILL: CSM Actionables Modal ── -->
+<div id="modal-mr2-csm-acts" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:14px;width:780px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div id="mr2-csm-acts-title" style="font-size:16px;font-weight:700;color:white"></div>
+      <button onclick="closeModal('modal-mr2-csm-acts')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="mr2-csm-acts-body" style="overflow-y:auto;padding:20px;flex:1"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
+      <button onclick="closeModal('modal-mr2-csm-acts')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
+
 </body>
 </html>
