@@ -242,6 +242,7 @@
     <div class="nav-section">Overview</div>
     <div class="nav-item active" onclick="showPage('dashboard',this)"><span>⬡</span> Dashboard</div>
     <div class="nav-section">Leadership Intel</div>
+    <div class="nav-item" onclick="showPage('manager-review',this)"><span>🔍</span> Manager Review</div>
     <div class="nav-item" onclick="showPage('benchmarks',this)"><span>📐</span> Operational Benchmarks</div>
     <div class="nav-item" onclick="showPage('growth-targets',this)"><span>🎯</span> Growth Targets</div>
     <div class="nav-item" onclick="showPage('risk-dive',this)"><span>⚠</span> Risk Deep Dive</div>
@@ -806,6 +807,9 @@
     <div class="page-header"><div><h1>All Accounts</h1><p>Master view — click Edit to update details or mark churned</p></div><button class="btn btn-secondary" onclick="fetchCentralData().then(loadAccountsList)">↻ Refresh</button></div>
     <div class="page-content">
 
+      <!-- CSM SUMMARY STRIP (injected by applyAccountFilters) -->
+      <div id="csm-strip-accounts" style="display:none;margin-bottom:14px"></div>
+
       <!-- FILTER BAR -->
       <div class="card" style="margin-bottom:14px;padding:14px 16px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -1131,7 +1135,7 @@
               </div>
               <div style="display:flex;gap:8px;">
                 <button onclick="copyMomEmail()" class="btn" style="background:var(--gold);color:var(--navy);font-weight:700;font-size:12px;padding:9px 16px;border-radius:6px;border:none;cursor:pointer;">📋 Copy Email</button>
-                <button onclick="downloadMomDocx()" id="mom-docx-btn" class="btn" style="background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-size:12px;padding:9px 16px;border-radius:6px;cursor:pointer;">📄 Download Word</button>
+                <button onclick="openMomTab()" id="mom-tab-btn" class="btn" style="background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-size:12px;padding:9px 16px;border-radius:6px;cursor:pointer;">↗ Open MoM</button>
                 <button onclick="resetMom()" class="btn" style="background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-size:12px;padding:9px 16px;border-radius:6px;cursor:pointer;">↻ Regenerate</button>
               </div>
             </div>
@@ -1651,6 +1655,7 @@ function refreshPage(id){
   else if(id==='growth-targets')loadGrowthTargets();
   else if(id==='meeting-reviews')loadMeetingReviews();
   else if(id==='mom-generator')loadMomGenerator();
+  else if(id==='manager-review')loadManagerReview();
   else if(id==='onboarding')loadOnboarding();
 }
 
@@ -2927,6 +2932,415 @@ function resetMom() {
 }
 
 // ── DOCX GENERATION ──
+function openMomTab() {
+  if (!momData) { showToast('Generate a MoM first'); return; }
+
+  const account   = momData._account || 'Client';
+  const type      = momData._type || 'Meeting';
+  const date      = momData._date || new Date().toISOString().split('T')[0];
+  const clientAtt = momData._attendeesClient || '';
+  const faAtt     = momData._attendeesFa || '';
+
+  // ── Inline-style helpers (no var(), no classes — Gmail safe) ──
+  const NAVY   = '#082255';
+  const GOLD   = '#FFA53B';
+  const BLUE   = '#1797CE';
+  const GREEN  = '#4BA428';
+  const AMBER  = '#F59E0B';
+  const RED    = '#D63031';
+  const PURPLE = '#7C3AED';
+  const LGRAY  = '#F0F4F8';
+  const MGRAY  = '#64748B';
+  const DTEXT  = '#1A1A2E';
+
+  const priorityColor = { High: RED, Medium: AMBER, Low: GREEN };
+  const sectionStyle  = {
+    discussion: { bg: '#F0FAF0', border: GREEN  },
+    decisions:  { bg: '#FFFBF0', border: AMBER  },
+    next_steps: { bg: '#F5F0FF', border: PURPLE },
+    context:    { bg: '#EBF5FB', border: BLUE   },
+    actions:    { bg: '#FFF5F5', border: RED    },
+  };
+
+  // ── Build meta rows ──
+  const metaRows = [
+    ['Date', date],
+    ['Meeting Type', type],
+    ['Client', account],
+    clientAtt ? ['Attendees (Client)', clientAtt] : null,
+    faAtt     ? ['Attendees (FA)', faAtt]          : null,
+    ['Prepared by', 'FieldAssist Customer Success'],
+  ].filter(Boolean).map(([label, val]) => `
+    <tr>
+      <td style="padding:8px 12px;background:${LGRAY};font-family:Arial,sans-serif;font-size:12px;font-weight:700;color:${MGRAY};border:1px solid #CBD5E1;white-space:nowrap">${label}</td>
+      <td style="padding:8px 12px;font-family:Arial,sans-serif;font-size:12px;color:${DTEXT};border:1px solid #CBD5E1">${val}</td>
+    </tr>`).join('');
+
+  // ── Build action items table ──
+  let actionHtml = '';
+  if (momData.action_items && momData.action_items.length > 0) {
+    const rows = momData.action_items.map((item, i) => `
+      <tr style="background:${i%2===0?'#ffffff':LGRAY}">
+        <td style="padding:9px 12px;font-family:Arial,sans-serif;font-size:12px;font-weight:700;color:${MGRAY};border:1px solid #CBD5E1;text-align:center">${i+1}</td>
+        <td style="padding:9px 12px;font-family:Arial,sans-serif;font-size:12px;color:${DTEXT};border:1px solid #CBD5E1">${item.action}</td>
+        <td style="padding:9px 12px;font-family:Arial,sans-serif;font-size:12px;font-weight:600;color:${NAVY};border:1px solid #CBD5E1">${item.owner}</td>
+        <td style="padding:9px 12px;font-family:Arial,sans-serif;font-size:12px;color:${MGRAY};border:1px solid #CBD5E1">${item.due_date}</td>
+        <td style="padding:9px 12px;border:1px solid #CBD5E1;text-align:center">
+          <span style="display:inline-block;padding:2px 10px;border-radius:10px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;background:${(priorityColor[item.priority]||MGRAY)}18;color:${priorityColor[item.priority]||MGRAY};border:1px solid ${(priorityColor[item.priority]||MGRAY)}50">${item.priority}</span>
+        </td>
+      </tr>`).join('');
+
+    actionHtml = `
+      <div style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="font-family:Arial,sans-serif;font-size:15px;font-weight:700;color:${NAVY}">Action Items &amp; Timelines</div>
+          <span style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;padding:2px 8px;background:#FFF5F5;border-radius:10px;border:1px solid ${RED}60;color:${RED}">${momData.action_items.length} items</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:${NAVY}">
+              <th style="padding:9px 12px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:${GOLD};border:1px solid ${NAVY};text-align:center;width:36px">#</th>
+              <th style="padding:9px 12px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:${GOLD};border:1px solid ${NAVY};text-align:left">Action</th>
+              <th style="padding:9px 12px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:${GOLD};border:1px solid ${NAVY};text-align:left;white-space:nowrap">Owner</th>
+              <th style="padding:9px 12px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:${GOLD};border:1px solid ${NAVY};text-align:left;white-space:nowrap">Due Date</th>
+              <th style="padding:9px 12px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:${GOLD};border:1px solid ${NAVY};text-align:center">Priority</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ── Build section blocks ──
+  const sectionsHtml = (momData.sections || []).map(sec => {
+    const st = sectionStyle[sec.type] || sectionStyle.discussion;
+    const points = (sec.points || []).map(pt =>
+      `<div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start">
+        <span style="flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${st.border};margin-top:6px;display:inline-block"></span>
+        <span style="font-family:Arial,sans-serif;font-size:12.5px;line-height:1.7;color:${DTEXT}">${pt}</span>
+      </div>`).join('');
+    return `
+      <div style="background:${st.bg};border-left:4px solid ${st.border};border-radius:6px;padding:16px 18px;margin-bottom:16px">
+        <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:${NAVY};margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid ${st.border}30">
+          ${sec.title || ''}
+        </div>
+        ${points}
+      </div>`;
+  }).join('');
+
+  // ── Full HTML page ──
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MoM — ${account} — ${date}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#F1F5F9;font-family:Arial,sans-serif}
+    #toolbar{position:fixed;top:0;left:0;right:0;z-index:100;background:${NAVY};padding:10px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+    #toolbar-left{display:flex;align-items:center;gap:12px}
+    #toolbar-title{font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:white}
+    #toolbar-sub{font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.55)}
+    #select-btn{background:${GOLD};color:${NAVY};font-family:Arial,sans-serif;font-size:12px;font-weight:700;padding:8px 18px;border:none;border-radius:6px;cursor:pointer;letter-spacing:.02em}
+    #select-btn:hover{background:#ffb84d}
+    #copy-hint{font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.6);display:none;margin-left:10px}
+    #copy-hint.show{display:inline}
+    #outer{padding-top:70px;padding-bottom:40px}
+    #mom-body{max-width:700px;margin:0 auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+  </style>
+</head>
+<body>
+
+<!-- ── TOOLBAR (not part of copy) ── -->
+<div id="toolbar">
+  <div id="toolbar-left">
+    <div>
+      <div id="toolbar-title">MoM · ${account} · ${type}</div>
+      <div id="toolbar-sub">Click "Select MoM" → Ctrl+C → Paste into Gmail</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center">
+    <span id="copy-hint">✓ Selected — now press Ctrl+C</span>
+    <button id="select-btn" onclick="selectMom()">📋 Select MoM Content</button>
+  </div>
+</div>
+
+<!-- ── MOM CONTENT ── -->
+<div id="outer">
+<div id="mom-body">
+
+  <!-- HEADER -->
+  <table style="width:100%;border-collapse:collapse;background:${NAVY}">
+    <tr>
+      <td style="padding:22px 26px;vertical-align:top">
+        <div style="font-family:Arial,sans-serif;font-size:18px;font-weight:700;color:white;margin-bottom:4px">FieldAssist</div>
+        <div style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,.55);letter-spacing:.06em;text-transform:uppercase">Minutes of Meeting</div>
+      </td>
+      <td style="padding:22px 26px;text-align:right;vertical-align:top">
+        <div style="font-family:Arial,sans-serif;font-size:18px;font-weight:700;color:${GOLD};margin-bottom:4px">${account}</div>
+        <div style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,.55)">${type} &nbsp;·&nbsp; ${date}</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- MEETING DETAILS -->
+  <div style="padding:24px 26px 0">
+    <div style="font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:${NAVY};margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid ${BLUE}">Meeting Details</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+      <tbody>${metaRows}</tbody>
+    </table>
+  </div>
+
+  <!-- EMAIL BODY -->
+  <div style="padding:0 26px 24px">
+    <div style="background:${LGRAY};border:1px solid #CBD5E1;border-radius:8px;padding:18px 20px">
+      <div style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${MGRAY};margin-bottom:6px">Subject</div>
+      <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:${NAVY};margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #CBD5E1">${momData.email_subject || ''}</div>
+      <div style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${MGRAY};margin-bottom:10px">Email Body</div>
+      <div style="font-family:Arial,sans-serif;font-size:13px;line-height:1.85;color:${DTEXT};white-space:pre-wrap">${momData.email_body || ''}</div>
+    </div>
+  </div>
+
+  <!-- ACTION ITEMS + SECTIONS -->
+  <div style="padding:0 26px 26px">
+    ${actionHtml}
+    ${sectionsHtml}
+  </div>
+
+  <!-- FOOTER -->
+  <div style="padding:16px 26px;background:${LGRAY};border-top:1px solid #E2E8F0;text-align:center">
+    <div style="font-family:Arial,sans-serif;font-size:11px;color:${MGRAY};font-style:italic">
+      Prepared by FieldAssist Customer Success &nbsp;·&nbsp; Information &gt; Insight &gt; Impact &nbsp;·&nbsp; www.fieldassist.com
+    </div>
+  </div>
+
+</div>
+</div>
+
+<scr`+`ipt>
+function selectMom(){
+  const el=document.getElementById('mom-body');
+  const range=document.createRange();
+  range.selectNodeContents(el);
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  const hint=document.getElementById('copy-hint');
+  hint.classList.add('show');
+  setTimeout(()=>hint.classList.remove('show'),4000);
+}
+// Auto-select on load for convenience
+window.onload=()=>{ setTimeout(selectMom,400); };
+<\/script>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MANAGER REVIEW PAGE -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-manager-review">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manager Review</h1>
+      <p class="page-sub">Weekly execution, operations and growth review — CSM-level drill-down</p>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <!-- ── FILTER BAR ── -->
+    <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--card-shadow)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">CSM</label>
+        <select id="mr2-csm" onchange="loadManagerReview()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark);min-width:140px">
+          <option value="">All CSMs</option>
+          <option>Vaishali Uniyal</option>
+          <option>Bhawana Malinda</option>
+          <option>Kanika Tandon</option>
+          <option>Hardeep Singh</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">Health</label>
+        <select id="mr2-health" onchange="loadManagerReview()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+          <option value="">All Accounts</option>
+          <option value="risk">At Risk Only</option>
+          <option value="growth">Growth Flagged</option>
+          <option value="clear">Clear</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">Period</label>
+        <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <button onclick="setMr2Period(30,this)" id="mr2-p30" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--navy);color:white">30d</button>
+          <button onclick="setMr2Period(60,this)" id="mr2-p60" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--text-mid)">60d</button>
+          <button onclick="setMr2Period(90,this)" id="mr2-p90" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--text-mid)">90d</button>
+        </div>
+      </div>
+      <div style="margin-left:auto;font-size:11px;color:var(--text-light)" id="mr2-summary">—</div>
+    </div>
+
+    <!-- ── CSM SUMMARY STRIP ── -->
+    <div id="csm-strip-mr2" style="display:none;margin-bottom:20px"></div>
+
+    <!-- ── S1: TEAM PULSE ── -->
+    <div id="mr2-team-pulse-section">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <span style="width:3px;height:14px;background:var(--navy);border-radius:2px;display:inline-block"></span>
+        Team Pulse
+        <span style="font-size:10px;font-weight:400;color:var(--text-light);text-transform:none;letter-spacing:0">Click a CSM card to filter the review</span>
+      </div>
+      <div id="mr2-team-pulse" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
+    </div>
+
+    <!-- ── S2: SKAM DIRECTION ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--amber);border-radius:2px;display:inline-block"></span>
+          SKAM Direction
+        </div>
+        <div style="display:flex;gap:6px">
+          <select id="mr2-skam-dir" onchange="renderSkamDirection()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All</option>
+            <option value="declining">Declining ↓</option>
+            <option value="improving">Improving ↑</option>
+            <option value="stable">Stable →</option>
+            <option value="nodata">No Trend Data</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="mr2-skam-dir-table" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- ── S3: PIPELINE ACCOUNTABILITY ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--green);border-radius:2px;display:inline-block"></span>
+          Pipeline Accountability
+        </div>
+        <div style="display:flex;gap:6px">
+          <select id="mr2-pip-age" onchange="renderPipelineAccountability()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All Ages</option>
+            <option value="fresh">Fresh (&lt;30d)</option>
+            <option value="aging">Aging (30–60d)</option>
+            <option value="stale">Stale (60d+)</option>
+          </select>
+          <select id="mr2-pip-stage" onchange="renderPipelineAccountability()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All Stages</option>
+            <option>Prospecting</option>
+            <option>Demo Done</option>
+            <option>Proposal Sent</option>
+            <option>Negotiation</option>
+            <option>Delayed Closure</option>
+          </select>
+        </div>
+      </div>
+      <div id="mr2-pip-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="mr2-pip-table" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- ── S4: REVIEW CADENCE ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--red);border-radius:2px;display:inline-block"></span>
+          Review Cadence
+        </div>
+        <select id="mr2-cadence-type" onchange="renderCadence()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+          <option value="">All Meeting Types</option>
+          <option value="MBR">MBR only</option>
+          <option value="QBR">QBR only</option>
+          <option value="BPR">BPR only</option>
+          <option value="EBR">EBR only</option>
+        </select>
+      </div>
+      <div id="mr2-cadence" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"></div>
+    </div>
+
+    <!-- ── S5: ACTIONABLE CLOSURE ── -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-mid);display:flex;align-items:center;gap:8px">
+          <span style="width:3px;height:14px;background:var(--navy);border-radius:2px;display:inline-block"></span>
+          Actionable Closure
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-mid);cursor:pointer">
+            <input type="checkbox" id="mr2-overdue-only" onchange="renderActionableClosure()"> Overdue only
+          </label>
+          <select id="mr2-act-type" onchange="renderActionableClosure()" style="font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark)">
+            <option value="">All Meeting Types</option>
+            <option value="MBR">MBR</option>
+            <option value="QBR">QBR</option>
+            <option value="BPR">BPR</option>
+          </select>
+        </div>
+      </div>
+      <div id="mr2-action-closure"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── DRILL: Account Detail Modal ── -->
+<div id="modal-mr2-account" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:14px;width:760px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div id="mr2-acc-modal-name" style="font-size:16px;font-weight:700;color:white"></div>
+        <div id="mr2-acc-modal-sub" style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px"></div>
+      </div>
+      <button onclick="closeModal('modal-mr2-account')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="mr2-acc-modal-body" style="overflow-y:auto;padding:20px;flex:1"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
+      <button onclick="closeModal('modal-mr2-account')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRILL: Pipeline Deal Modal ── -->
+<div id="modal-mr2-deal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:14px;width:620px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div id="mr2-deal-modal-title" style="font-size:16px;font-weight:700;color:white"></div>
+      <button onclick="closeModal('modal-mr2-deal')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="mr2-deal-modal-body" style="overflow-y:auto;padding:20px;flex:1"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
+      <button onclick="closeModal('modal-mr2-deal')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRILL: CSM Actionables Modal ── -->
+<div id="modal-mr2-csm-acts" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:14px;width:780px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div id="mr2-csm-acts-title" style="font-size:16px;font-weight:700;color:white"></div>
+      <button onclick="closeModal('modal-mr2-csm-acts')" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="mr2-csm-acts-body" style="overflow-y:auto;padding:20px;flex:1"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right">
+      <button onclick="closeModal('modal-mr2-csm-acts')" style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { showToast('Pop-up blocked — please allow pop-ups for this page'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
 async function downloadMomDocx() {
   if (!momData) { showToast('Generate a MoM first'); return; }
   const btn = document.getElementById('mom-docx-btn');
@@ -4453,6 +4867,7 @@ function applyAccountFilters(){
   const fHq=(document.getElementById('acc-f-hq')?.value||'').toLowerCase().trim();
   const fAm=document.getElementById('acc-f-am')?.value||'';
   const fCsm=document.getElementById('acc-f-csm')?.value||'';
+  renderCsmStrip(fCsm, 'csm-strip-accounts');
   const fStatus=document.getElementById('acc-f-status')?.value||'';
   const fOb=document.getElementById('acc-f-ob')?.value||'';
   const fRisk=document.getElementById('acc-f-risk')?.value||'';
@@ -4575,6 +4990,647 @@ function exportReport(){
 
 function resetOperational(){document.getElementById('operationalForm').reset();['rc','sd','cp','vp','es'].forEach(k=>document.getElementById(k).value=3);updateSkam();document.getElementById('op-date').value=new Date().toISOString().split('T')[0];MS_SELECTIONS.demo=[];renderMsTags('demo');}
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+
+
+// ════════════════════════════════════════════════════════════════
+// CSM SUMMARY STRIP — reusable across any CSM filter
+// ════════════════════════════════════════════════════════════════
+function renderCsmStrip(csm, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!csm) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = buildCsmSummaryHtml(csm);
+}
+
+function buildCsmSummaryHtml(csm) {
+  const acc     = centralData.accounts || [];
+  const pip     = centralData.pipeline || [];
+  const targets = centralData.targets  || [];
+
+  const myAcc  = acc.filter(a => (a['CSM']||a.csm) === csm);
+  const active  = myAcc.filter(a => (a['Account Status']||'Active') !== 'Churned');
+  const churned = myAcc.filter(a => (a['Account Status']||'') === 'Churned');
+
+  const activeMrr = active.reduce((s,a)  => s + (Number(a['Current MRR (₹)'])||0), 0);
+  const churnMrr  = churned.reduce((s,a) => s + (Number(a['Current MRR (₹)'])||0), 0);
+
+  const myAccNames = active.map(a => a['Company Name']||a.company);
+  const wonMrr = pip
+    .filter(p => (p['Opportunity Stage']||p.stage) === 'Closed Won' && myAccNames.includes(p['Account Name']||p.account))
+    .reduce((s,p) => s + (Number(p['Potential MRR (₹)'])||0), 0);
+  const pipMrr = pip
+    .filter(p => !['Closed Won','Closed Lost'].includes(p['Opportunity Stage']||p.stage) && myAccNames.includes(p['Account Name']||p.account))
+    .reduce((s,p) => s + (Number(p['Potential MRR (₹)'])||0), 0);
+
+  // Target: prefer quarterly, fall back to annual, fall back to null
+  const qTarget = targets.find(t => t['CSM'] === csm && t['Period Type'] === 'Quarterly');
+  const aTarget = targets.find(t => t['CSM'] === csm && t['Period Type'] === 'Annual');
+  const targetMrr  = Number(qTarget?.['Target MRR'] || aTarget?.['Target MRR'] || 0);
+  const targetLabel = qTarget ? 'Q Target' : aTarget ? 'Annual Target' : 'Target';
+  const achievement = targetMrr > 0 ? Math.round(wonMrr / targetMrr * 100) : null;
+  const achieveColor = achievement === null ? 'var(--text-mid)' : achievement >= 100 ? 'var(--green)' : achievement >= 60 ? 'var(--amber)' : 'var(--red)';
+
+  const initials = csm.split(' ').map(w=>w[0]).join('').substring(0,2);
+
+  const tile = (label, value, valueColor, sub) =>
+    `<div style="flex:1;padding:0 22px;border-right:1px solid var(--border)">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.11em;color:var(--text-light);margin-bottom:5px">${label}</div>
+      <div style="font-size:20px;font-weight:800;color:${valueColor};line-height:1">${value}</div>
+      ${sub ? `<div style="font-size:10px;color:var(--text-light);margin-top:3px">${sub}</div>` : ''}
+    </div>`;
+
+  return `
+    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px 0;display:flex;align-items:center;box-shadow:var(--card-shadow);overflow:hidden">
+      <!-- CSM Identity -->
+      <div style="padding:0 24px 0 20px;border-right:1px solid var(--border);flex-shrink:0">
+        <div style="width:42px;height:42px;background:var(--navy);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--gold);margin-bottom:6px">${initials}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-dark);white-space:nowrap">${csm.split(' ')[0]}</div>
+        <div style="font-size:10px;color:var(--text-light)">${active.length} accounts</div>
+      </div>
+      <!-- 6 metric tiles -->
+      <div style="flex:1;display:flex;align-items:center;padding:0 0 0 4px">
+        ${tile('Active Accounts', active.length, 'var(--navy)', active.length + ' active · ' + churned.length + ' churned')}
+        ${tile('Active MRR', fmtMrrFull(activeMrr), 'var(--navy)', 'Current billing')}
+        ${tile('Closed Won MRR', wonMrr ? fmtMrrFull(wonMrr) : '₹0', wonMrr ? 'var(--green)' : 'var(--text-light)', 'Pipeline wins')}
+        ${tile('Open Pipeline', pipMrr ? fmtMrrFull(pipMrr) : '₹0', 'var(--amber)', 'In-progress deals')}
+        ${tile('Churn MRR', churnMrr ? fmtMrrFull(churnMrr) : '₹0', churnMrr ? 'var(--red)' : 'var(--text-light)', churned.length + ' churned account' + (churned.length !== 1 ? 's' : ''))}
+        <div style="flex:1;padding:0 22px">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.11em;color:var(--text-light);margin-bottom:5px">${targetLabel} Achievement</div>
+          <div style="font-size:20px;font-weight:800;color:${achieveColor};line-height:1">${achievement !== null ? achievement + '%' : '—'}</div>
+          <div style="font-size:10px;color:var(--text-light);margin-top:3px">${targetMrr ? 'of ' + fmtMrrFull(targetMrr) + ' target' : 'No target set'}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// MANAGER REVIEW
+// ════════════════════════════════════════════════════════════════
+
+let mr2Period = 30;
+let mr2SkamMap = {};      // account -> {curr, prev, delta, dir}
+let mr2PipData = [];      // filtered pipeline for current view
+let mr2AccData = [];      // filtered active accounts
+let mr2OpsAll = [];       // all ops records (for trend)
+let mr2Reviews = [];      // all meeting reviews
+
+function setMr2Period(days, btn) {
+  mr2Period = days;
+  ['30','60','90'].forEach(d => {
+    const b = document.getElementById('mr2-p'+d);
+    if (!b) return;
+    if (d === String(days)) { b.style.background = 'var(--navy)'; b.style.color = 'white'; }
+    else { b.style.background = 'white'; b.style.color = 'var(--text-mid)'; }
+  });
+  renderCadence();
+  renderActionableClosure();
+}
+
+function loadManagerReview() {
+  const csm   = document.getElementById('mr2-csm')?.value || '';
+  const health= document.getElementById('mr2-health')?.value || '';
+  renderCsmStrip(csm, 'csm-strip-mr2');
+  const acc   = centralData.accounts || [];
+  const ops   = centralData.operational || [];
+  const pip   = centralData.pipeline || [];
+  const rev   = centralData.meetingReviews || [];
+  mr2OpsAll   = ops;
+  mr2Reviews  = rev;
+
+  // Base: active accounts
+  let active = acc.filter(a => (a['Account Status'] || 'Active') !== 'Churned');
+  if (csm) active = active.filter(a => (a['CSM'] || a.csm) === csm);
+
+  // Health filter
+  const ls = getLatestSkam(ops);
+  if (health === 'risk')   active = active.filter(a => (ls[a['Company Name']||a.company]?.['Risk Flag']||'') === 'Yes');
+  if (health === 'growth') active = active.filter(a => (ls[a['Company Name']||a.company]?.['Growth Flag']||'') === 'High');
+  if (health === 'clear')  active = active.filter(a => {
+    const o = ls[a['Company Name']||a.company];
+    return !o || ((o['Risk Flag']||'') !== 'Yes' && (o['Growth Flag']||'') !== 'High');
+  });
+  mr2AccData = active;
+
+  // Build SKAM direction map (last 2 reviews per account)
+  mr2SkamMap = {};
+  const byAcc = {};
+  ops.forEach(o => {
+    const n = o['Account Name'] || o.account;
+    if (!byAcc[n]) byAcc[n] = [];
+    byAcc[n].push(o);
+  });
+  Object.entries(byAcc).forEach(([name, records]) => {
+    const sorted = records.sort((a,b) => (a['Review Date']||'') > (b['Review Date']||'') ? 1 : -1);
+    const curr = sorted[sorted.length-1];
+    const prev = sorted.length >= 2 ? sorted[sorted.length-2] : null;
+    const currSc = Number(curr?.['SKAM Score'] || 0);
+    const prevSc = prev ? Number(prev?.['SKAM Score'] || 0) : null;
+    const delta  = prevSc !== null ? currSc - prevSc : null;
+    const dir    = delta === null ? 'nodata' : delta > 0 ? 'improving' : delta < 0 ? 'declining' : 'stable';
+    mr2SkamMap[name] = { curr: currSc, prev: prevSc, delta, dir, lastDate: curr?.['Review Date'] || '', risk: curr?.['Risk Flag'] || '', growth: curr?.['Growth Flag'] || '', csm: (acc.find(a=>(a['Company Name']||a.company)===name)||{})['CSM']||'' };
+  });
+
+  // Pipeline filtered
+  mr2PipData = pip.filter(p => {
+    if (['Closed Won','Closed Lost'].includes(p['Opportunity Stage']||p.stage)) return false;
+    if (!csm) return true;
+    const accName = p['Account Name'] || p.account;
+    return active.some(a => (a['Company Name']||a.company) === accName);
+  });
+
+  // Summary line
+  const sumEl = document.getElementById('mr2-summary');
+  if (sumEl) sumEl.textContent = active.length + ' accounts · ' + mr2PipData.length + ' open deals · ' + (csm||'All CSMs');
+
+  // Team Pulse (section 1) — only shown when no CSM filter
+  const pulseSection = document.getElementById('mr2-team-pulse-section');
+  if (pulseSection) pulseSection.style.display = csm ? 'none' : 'block';
+  if (!csm) renderTeamPulse(acc, ops, pip, rev);
+
+  // Render all sections
+  renderSkamDirection();
+  renderPipelineAccountability();
+  renderCadence();
+  renderActionableClosure();
+}
+
+// ── S1: TEAM PULSE ──────────────────────────────────────────────
+function renderTeamPulse(acc, ops, pip, rev) {
+  const el = document.getElementById('mr2-team-pulse');
+  if (!el) return;
+  const CSMs = ['Vaishali Uniyal','Bhawana Malinda','Kanika Tandon','Hardeep Singh'];
+  const ls = getLatestSkam(ops);
+  const d30 = new Date(Date.now() - 30*86400000);
+
+  el.innerHTML = CSMs.map(csm => {
+    const myAcc = acc.filter(a => (a['CSM']||a.csm) === csm && (a['Account Status']||'Active') !== 'Churned');
+    const skams = myAcc.map(a => Number(ls[a['Company Name']||a.company]?.['SKAM Score']||0)).filter(Boolean);
+    const avgSk = skams.length ? Math.round(skams.reduce((a,b)=>a+b)/skams.length) : 0;
+    const reviewed30 = myAcc.filter(a => {
+      const rd = ls[a['Company Name']||a.company]?.['Review Date'];
+      return rd && new Date(rd) >= d30;
+    }).length;
+    const riskCnt = myAcc.filter(a => (ls[a['Company Name']||a.company]?.['Risk Flag']||'') === 'Yes').length;
+    const myAccNames = myAcc.map(a => a['Company Name']||a.company);
+    const openPipMrr = pip.filter(p => myAccNames.includes(p['Account Name']||p.account) && !['Closed Won','Closed Lost'].includes(p['Opportunity Stage']||p.stage)).reduce((s,p) => s+(Number(p['Potential MRR (₹)'])||0),0);
+    const reviewPct = myAcc.length ? Math.round(reviewed30/myAcc.length*100) : 0;
+    const initials = csm.split(' ').map(w=>w[0]).join('').substring(0,2);
+    const skamColor = avgSk >= 70 ? 'var(--green)' : avgSk >= 55 ? 'var(--amber)' : 'var(--red)';
+
+    return `<div onclick="filterToCsm('${csm}')" style="background:white;border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:box-shadow .15s;box-shadow:var(--card-shadow)" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='var(--card-shadow)'">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="width:36px;height:36px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0">${initials}</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text-dark)">${csm.split(' ')[0]}</div>
+          <div style="font-size:10px;color:var(--text-light)">${myAcc.length} accounts</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--off-white);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:3px">Avg SKAM</div>
+          <div style="font-size:20px;font-weight:800;color:${skamColor}">${avgSk||'—'}</div>
+        </div>
+        <div style="background:var(--off-white);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:3px">Reviewed 30d</div>
+          <div style="font-size:20px;font-weight:800;color:${reviewPct>=70?'var(--green)':reviewPct>=40?'var(--amber)':'var(--red)'}">${reviewPct}%</div>
+        </div>
+        <div style="background:${riskCnt>0?'#FFF5F5':'var(--off-white)'};border-radius:8px;padding:10px;text-align:center;${riskCnt>0?'border:1px solid #FECACA;':''}">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:3px">At Risk</div>
+          <div style="font-size:20px;font-weight:800;color:${riskCnt>0?'var(--red)':'var(--green)'}">${riskCnt}</div>
+        </div>
+        <div style="background:var(--off-white);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:3px">Pipeline</div>
+          <div style="font-size:14px;font-weight:800;color:var(--navy)">${fmtMrr(openPipMrr)||'—'}</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;text-align:center;font-size:10px;color:var(--text-light)">Click to review →</div>
+    </div>`;
+  }).join('');
+}
+
+function filterToCsm(csm) {
+  const sel = document.getElementById('mr2-csm');
+  if (sel) { sel.value = csm; loadManagerReview(); }
+}
+
+// ── S2: SKAM DIRECTION ──────────────────────────────────────────
+function renderSkamDirection() {
+  const el = document.getElementById('mr2-skam-dir-table');
+  if (!el) return;
+  const dirFilter = document.getElementById('mr2-skam-dir')?.value || '';
+  const accNames  = mr2AccData.map(a => a['Company Name']||a.company);
+  let entries = Object.entries(mr2SkamMap).filter(([n]) => accNames.includes(n));
+  if (dirFilter) entries = entries.filter(([,v]) => v.dir === dirFilter);
+  entries.sort((a,b) => {
+    const order = {declining:0, nodata:1, stable:2, improving:3};
+    return (order[a[1].dir]||2) - (order[b[1].dir]||2);
+  });
+
+  if (!entries.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-light);font-size:13px">No accounts match this filter</div>'; return; }
+
+  const dirIcon  = {improving:'<span style="color:var(--green);font-weight:700">↑</span>', declining:'<span style="color:var(--red);font-weight:700">↓</span>', stable:'<span style="color:var(--amber);font-weight:700">→</span>', nodata:'<span style="color:var(--text-light)">—</span>'};
+  const dirBg    = {improving:'#F0FAF0', declining:'#FFF5F5', stable:'#FFFBF0', nodata:'white'};
+
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead>
+      <tr style="background:var(--navy)">
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Account</th>
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">CSM</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Current SKAM</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Previous</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Δ</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Direction</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Risk</th>
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Last Review</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em"></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${entries.map(([name,v],i) => {
+        const deltaStr = v.delta === null ? '—' : (v.delta > 0 ? '+'+v.delta : String(v.delta));
+        const skamCol  = v.curr >= 70 ? 'var(--green)' : v.curr >= 55 ? 'var(--amber)' : 'var(--red)';
+        return `<tr style="background:${i%2===0?'white':'var(--off-white)'};border-bottom:1px solid var(--border);cursor:pointer" onclick="openAccDetail('${name.replace(/'/g,'&#39;')}')">
+          <td style="padding:10px 14px;font-weight:600;color:var(--text-dark)">${name}</td>
+          <td style="padding:10px 14px;color:var(--text-mid)">${v.csm||'—'}</td>
+          <td style="padding:10px 14px;text-align:center;font-size:18px;font-weight:800;color:${skamCol}">${v.curr||'—'}</td>
+          <td style="padding:10px 14px;text-align:center;color:var(--text-mid)">${v.prev||'—'}</td>
+          <td style="padding:10px 14px;text-align:center;font-weight:700;color:${v.delta===null?'var(--text-light)':v.delta>0?'var(--green)':'var(--red)'}">${deltaStr}</td>
+          <td style="padding:10px 14px;text-align:center">${dirIcon[v.dir]||'—'}</td>
+          <td style="padding:10px 14px;text-align:center">${v.risk==='Yes'?'<span class="badge badge-red" style="font-size:9px">Risk</span>':'<span style="font-size:10px;color:var(--text-light)">—</span>'}</td>
+          <td style="padding:10px 14px;color:var(--text-light);font-size:11px">${v.lastDate||'—'}</td>
+          <td style="padding:10px 14px;text-align:center"><span style="font-size:11px;color:var(--navy);font-weight:600">Detail →</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+// ── S3: PIPELINE ACCOUNTABILITY ─────────────────────────────────
+function renderPipelineAccountability() {
+  const kpiEl  = document.getElementById('mr2-pip-kpis');
+  const tableEl= document.getElementById('mr2-pip-table');
+  if (!kpiEl || !tableEl) return;
+
+  const ageFilter   = document.getElementById('mr2-pip-age')?.value || '';
+  const stageFilter = document.getElementById('mr2-pip-stage')?.value || '';
+
+  let pip = mr2PipData.slice();
+  if (stageFilter) pip = pip.filter(p => (p['Opportunity Stage']||p.stage) === stageFilter);
+
+  const withAge = pip.map(p => ({ ...p, age: daysSince(p['Timestamp']||p.timestamp||'') }));
+  const stale60 = withAge.filter(p => p.age >= 60);
+  const stale30 = withAge.filter(p => p.age >= 30);
+  const totalMrr= withAge.reduce((s,p)=>s+(Number(p['Potential MRR (₹)'])||0),0);
+  const staleMrr= stale30.reduce((s,p)=>s+(Number(p['Potential MRR (₹)'])||0),0);
+
+  // KPI tiles
+  kpiEl.innerHTML = [
+    {label:'Total Open Deals', val:withAge.length, sub:'open opportunities', color:'var(--navy)'},
+    {label:'Total Open MRR', val:fmtMrr(totalMrr), sub:'across pipeline', color:'var(--green)'},
+    {label:'Stale 30d+', val:stale30.length, sub:fmtMrr(staleMrr)+' at risk', color:stale30.length>0?'var(--amber)':'var(--green)'},
+    {label:'Stale 60d+', val:stale60.length, sub:'need immediate action', color:stale60.length>0?'var(--red)':'var(--green)'},
+  ].map(t => `<div style="background:white;border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:var(--card-shadow)">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:6px">${t.label}</div>
+    <div style="font-size:24px;font-weight:800;color:${t.color}">${t.val}</div>
+    <div style="font-size:10px;color:var(--text-light);margin-top:3px">${t.sub}</div>
+  </div>`).join('');
+
+  // Apply age filter
+  let display = withAge;
+  if (ageFilter === 'fresh')  display = withAge.filter(p => p.age < 30);
+  if (ageFilter === 'aging')  display = withAge.filter(p => p.age >= 30 && p.age < 60);
+  if (ageFilter === 'stale')  display = withAge.filter(p => p.age >= 60);
+  display.sort((a,b) => b.age - a.age);
+
+  if (!display.length) { tableEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-light);font-size:13px">No deals match this filter</div>'; return; }
+
+  const accMap = {};
+  (centralData.accounts||[]).forEach(a => accMap[a['Company Name']||a.company] = a);
+
+  tableEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead>
+      <tr style="background:var(--navy)">
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Account</th>
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">CSM</th>
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">AM</th>
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Stage</th>
+        <th style="padding:10px 14px;text-align:left;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Product</th>
+        <th style="padding:10px 14px;text-align:right;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">MRR</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em">Age</th>
+        <th style="padding:10px 14px;text-align:center;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.06em"></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${display.map((p,i) => {
+        const name = p['Account Name']||p.account;
+        const accD = accMap[name]||{};
+        const ageColor = p.age >= 60 ? 'var(--red)' : p.age >= 30 ? 'var(--amber)' : 'var(--green)';
+        return `<tr style="background:${i%2===0?'white':'var(--off-white)'};border-bottom:1px solid var(--border);cursor:pointer" onclick="openDealDetail('${encodeURIComponent(JSON.stringify({account:name,stage:p['Opportunity Stage']||p.stage,mrr:p['Potential MRR (₹)']||0,product:p['Product/Modules']||p.products||'',am:p['Account Manager']||p.am||'',age:p.age,delayReason:p['Delay Reason']||'',notes:p['Notes']||''}))}')">
+          <td style="padding:10px 14px;font-weight:600;color:var(--text-dark)">${name}</td>
+          <td style="padding:10px 14px;color:var(--text-mid)">${accD['CSM']||accD.csm||'—'}</td>
+          <td style="padding:10px 14px;color:var(--text-mid)">${p['Account Manager']||p.am||'—'}</td>
+          <td style="padding:10px 14px"><span class="badge badge-blue" style="font-size:10px">${p['Opportunity Stage']||p.stage||'—'}</span></td>
+          <td style="padding:10px 14px;color:var(--text-mid);font-size:11px">${p['Product/Modules']||p.products||'—'}</td>
+          <td style="padding:10px 14px;text-align:right;font-weight:700;color:var(--navy)">${fmtMrrFull(Number(p['Potential MRR (₹)'])||0)}</td>
+          <td style="padding:10px 14px;text-align:center"><span style="font-size:12px;font-weight:700;color:${ageColor}">${p.age}d</span></td>
+          <td style="padding:10px 14px;text-align:center"><span style="font-size:11px;color:var(--navy);font-weight:600">Detail →</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+// ── S4: REVIEW CADENCE ──────────────────────────────────────────
+function renderCadence() {
+  const el = document.getElementById('mr2-cadence');
+  if (!el) return;
+  const mtFilter = document.getElementById('mr2-cadence-type')?.value || '';
+  const ls = getLatestSkam(mr2OpsAll);
+  const accNames = mr2AccData.map(a => a['Company Name']||a.company);
+
+  // For each account, find last review of the required type
+  const getLastReview = (name, type) => {
+    let recs = mr2OpsAll.filter(o => (o['Account Name']||o.account) === name);
+    if (type) recs = recs.filter(o => (o['Meeting Type']||o.meetingType||'').includes(type));
+    if (!recs.length) return null;
+    return recs.sort((a,b) => (a['Review Date']||'') > (b['Review Date']||'') ? 1 : -1)[recs.length-1];
+  };
+
+  const accInfo = accNames.map(name => {
+    const accD = mr2AccData.find(a=>(a['Company Name']||a.company)===name)||{};
+    const lastRev = getLastReview(name, mtFilter);
+    const lastDate = lastRev?.['Review Date'] || null;
+    const days = lastDate ? daysSince(lastDate) : 999;
+    const skam = Number(ls[name]?.['SKAM Score']||0);
+    const risk = ls[name]?.['Risk Flag'] === 'Yes';
+    return { name, csm: accD['CSM']||accD.csm||'—', days, skam, risk, lastDate };
+  });
+
+  const current  = accInfo.filter(a => a.days <= 30).sort((a,b)=>a.days-b.days);
+  const overdue  = accInfo.filter(a => a.days > 30 && a.days <= 60).sort((a,b)=>a.days-b.days);
+  const critical = accInfo.filter(a => a.days > 60).sort((a,b)=>b.days-a.days);
+
+  const renderBucket = (items, label, color, bgColor) => {
+    const skamColor = s => s >= 70 ? 'var(--green)' : s >= 55 ? 'var(--amber)' : 'var(--red)';
+    return `<div style="background:white;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--card-shadow)">
+      <div style="padding:12px 16px;background:${bgColor};border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;font-weight:700;color:${color}">${label}</div>
+        <span style="font-size:18px;font-weight:800;color:${color}">${items.length}</span>
+      </div>
+      <div style="max-height:320px;overflow-y:auto">
+        ${items.length ? items.map(a => `
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openAccDetail('${a.name.replace(/'/g,'&#39;')}')">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;color:var(--text-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.name}</div>
+              <div style="font-size:10px;color:var(--text-light);margin-top:1px">${a.csm||'—'} · ${a.lastDate?a.lastDate:'Never reviewed'}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:13px;font-weight:700;color:${skamColor(a.skam)}">${a.skam||'—'}</div>
+              ${a.risk?'<span class="badge badge-red" style="font-size:8px">Risk</span>':''}
+            </div>
+            <div style="font-size:12px;font-weight:700;color:${color};flex-shrink:0">${a.days===999?'Never':a.days+'d'}</div>
+          </div>`).join('') : `<div style="padding:20px;text-align:center;font-size:12px;color:var(--text-light)">No accounts in this bracket</div>`}
+      </div>
+    </div>`;
+  };
+
+  el.innerHTML = [
+    renderBucket(current,  'Current (0–30d)', 'var(--green)', '#F0FAF0'),
+    renderBucket(overdue,  'Overdue (30–60d)', 'var(--amber)', '#FFFBF0'),
+    renderBucket(critical, 'Critical (60d+)', 'var(--red)', '#FFF5F5'),
+  ].join('');
+}
+
+// ── S5: ACTIONABLE CLOSURE ──────────────────────────────────────
+function renderActionableClosure() {
+  const el = document.getElementById('mr2-action-closure');
+  if (!el) return;
+  const overdueOnly = document.getElementById('mr2-overdue-only')?.checked || false;
+  const mtFilter    = document.getElementById('mr2-act-type')?.value || '';
+  const csm         = document.getElementById('mr2-csm')?.value || '';
+  const accNames    = mr2AccData.map(a => a['Company Name']||a.company);
+  const acc         = centralData.accounts || [];
+  const CSMs        = csm ? [csm] : ['Vaishali Uniyal','Bhawana Malinda','Kanika Tandon','Hardeep Singh'];
+  const cutoff      = new Date(Date.now() - mr2Period*86400000);
+
+  el.innerHTML = CSMs.map(csmName => {
+    const csmAccNames = acc.filter(a=>(a['CSM']||a.csm)===csmName).map(a=>a['Company Name']||a.company);
+    let reviews = mr2Reviews.filter(r => {
+      const rAcc = r['Account Name']||r.account;
+      if (!csmAccNames.includes(rAcc)) return false;
+      if (mtFilter && (r['Meeting Type']||r.meetingType||'') !== mtFilter) return false;
+      return true;
+    });
+
+    let allActs=[], openActs=[], closedActs=[];
+    reviews.forEach(r => {
+      try {
+        const acts = JSON.parse(r['Actionables']||r.actionables||'[]');
+        const rd = new Date(r['Review Date']||r.reviewDate||'');
+        acts.forEach(a => {
+          const act = { ...a, account: r['Account Name']||r.account, meetingDate: r['Review Date']||r.reviewDate, meetingType: r['Meeting Type']||r.meetingType, ageD: r['Review Date']?daysSince(r['Review Date']):999 };
+          allActs.push(act);
+          if (a.status === 'Done') closedActs.push(act);
+          else openActs.push(act);
+        });
+      } catch(e){}
+    });
+
+    const rate = allActs.length ? Math.round(closedActs.length/allActs.length*100) : 100;
+    const rateColor = rate >= 70 ? 'var(--green)' : rate >= 40 ? 'var(--amber)' : 'var(--red)';
+    const overdue = openActs.filter(a => a.due && new Date(a.due) < new Date());
+    let display = overdueOnly ? overdue : openActs;
+    const initials = csmName.split(' ').map(w=>w[0]).join('').substring(0,2);
+
+    return `<div style="background:white;border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:var(--card-shadow)">
+      <div style="padding:14px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border)">
+        <div style="width:36px;height:36px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0">${initials}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--text-dark)">${csmName.split(' ')[0]}</div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:2px">${allActs.length} total · ${openActs.length} open · ${overdue.length} overdue</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="text-align:center">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:2px">Closure Rate</div>
+            <div style="font-size:22px;font-weight:800;color:${rateColor}">${rate}%</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:2px">Open</div>
+            <div style="font-size:22px;font-weight:800;color:${openActs.length>0?'var(--red)':'var(--green)'}">${openActs.length}</div>
+          </div>
+          <button onclick="openCsmActsDetail('${csmName}')" style="padding:7px 14px;background:var(--navy);color:white;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">View All →</button>
+        </div>
+      </div>
+      ${display.length ? `<div style="padding:12px 18px">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:8px">${overdueOnly?'Overdue':'Open'} Actionables (${display.length})</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--off-white)">
+            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid)">Action</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid)">Account</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid)">Owner</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid)">Due</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--text-mid)">Meeting</th>
+          </tr></thead>
+          <tbody>
+            ${display.slice(0,6).map(a => {
+              const isOverdue = a.due && new Date(a.due) < new Date();
+              return `<tr style="border-top:1px solid var(--border)">
+                <td style="padding:7px 10px;color:var(--text-dark)">${a.action}</td>
+                <td style="padding:7px 10px;color:var(--text-mid);font-size:11px">${a.account||'—'}</td>
+                <td style="padding:7px 10px;color:var(--text-mid)">${a.owner||'—'}</td>
+                <td style="padding:7px 10px;font-weight:${isOverdue?'700':'400'};color:${isOverdue?'var(--red)':'var(--text-mid)'}">${a.due||'—'}${isOverdue?' ⚠':''}</td>
+                <td style="padding:7px 10px;font-size:10px;color:var(--text-light)">${a.meetingType||'—'} · ${a.meetingDate||'—'}</td>
+              </tr>`;
+            }).join('')}
+            ${display.length > 6 ? `<tr><td colspan="5" style="padding:8px 10px;text-align:center;font-size:11px;color:var(--text-light)">+ ${display.length-6} more — click View All</td></tr>` : ''}
+          </tbody>
+        </table>
+      </div>` : `<div style="padding:14px 18px;font-size:12px;color:var(--text-light)">${overdueOnly?'No overdue actionables':'All actionables closed ✓'}</div>`}
+    </div>`;
+  }).join('');
+}
+
+// ── DRILL-DOWN FUNCTIONS ─────────────────────────────────────────
+function openAccDetail(name) {
+  const ls = getLatestSkam(mr2OpsAll);
+  const skamData = ls[name] || {};
+  const accD = (centralData.accounts||[]).find(a=>(a['Company Name']||a.company)===name)||{};
+  const mrr = Number(accD['Current MRR (₹)']||0);
+
+  // SKAM history (all ops records for this account)
+  const history = mr2OpsAll.filter(o=>(o['Account Name']||o.account)===name)
+    .sort((a,b)=>(a['Review Date']||'')>(b['Review Date']||'')?1:-1);
+
+  // Meeting reviews for this account
+  const reviews = mr2Reviews.filter(r=>(r['Account Name']||r.account)===name)
+    .sort((a,b)=>(b['Review Date']||b.reviewDate||'')>(a['Review Date']||a.reviewDate||'')?1:-1);
+
+  const skamColor = s => s>=70?'var(--green)':s>=55?'var(--amber)':'var(--red)';
+  const dims = ['Value Perception','Executive Sponsorship','Solution Depth','Relationship Coverage','Competitive Positioning'];
+
+  document.getElementById('mr2-acc-modal-name').textContent = name;
+  document.getElementById('mr2-acc-modal-sub').textContent = (accD['CSM']||'—') + ' · ' + fmtMrrFull(mrr) + ' MRR · ' + (skamData['Risk Flag']==='Yes'?'⚠ Risk Flagged':'Clear');
+
+  document.getElementById('mr2-acc-modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:var(--off-white);border-radius:10px;padding:16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);margin-bottom:12px">Current SKAM Dimensions</div>
+        ${dims.map(d=>{
+          const v=Number(skamData[d]||0);const isRisk=(d==='Competitive Positioning'?v>2.5:v<3)&&v>0;
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--text-mid)">${d}</span>
+            <span style="font-size:14px;font-weight:700;color:${isRisk?'var(--red)':v>=3?'var(--green)':'var(--text-light)'}">${v||'—'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="background:var(--off-white);border-radius:10px;padding:16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);margin-bottom:12px">SKAM Score History</div>
+        ${history.length ? history.map((h,i)=>{
+          const sc=Number(h['SKAM Score']||0);
+          const prev=i>0?Number(history[i-1]['SKAM Score']||0):null;
+          const delta=prev!==null?sc-prev:null;
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--text-mid)">${h['Review Date']||'—'}</span>
+            <span style="font-size:14px;font-weight:700;color:${skamColor(sc)}">${sc}</span>
+            ${delta!==null?`<span style="font-size:11px;font-weight:600;color:${delta>0?'var(--green)':delta<0?'var(--red)':'var(--text-light)'}">${delta>0?'+':''}${delta}</span>`:''}
+          </div>`;
+        }).join('') : '<div style="font-size:12px;color:var(--text-light)">No history yet</div>'}
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);margin-bottom:10px">Meeting History (${reviews.length})</div>
+    ${reviews.length ? reviews.slice(0,5).map(r=>{
+      let acts=[];try{acts=JSON.parse(r['Actionables']||r.actionables||'[]');}catch(e){}
+      const open=acts.filter(a=>a.status!=='Done').length;
+      return `<div style="background:white;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="badge badge-blue" style="font-size:10px">${r['Meeting Type']||r.meetingType||'—'}</span>
+          <span style="font-size:12px;color:var(--text-mid)">${r['Review Date']||r.reviewDate||'—'}</span>
+          ${open>0?`<span class="badge badge-amber" style="font-size:9px">${open} open</span>`:'<span class="badge badge-green" style="font-size:9px">All done</span>'}
+        </div>
+        ${r['Notes']||r.notes?`<div style="font-size:11px;color:var(--text-mid);line-height:1.6;white-space:pre-wrap">${(r['Notes']||r.notes||'').substring(0,200)}${(r['Notes']||r.notes||'').length>200?'…':''}</div>`:''}
+      </div>`;
+    }).join('') : '<div style="font-size:12px;color:var(--text-light)">No meeting reviews recorded</div>'}
+  `;
+  openModal('modal-mr2-account');
+}
+
+function openDealDetail(encoded) {
+  let deal = {};
+  try { deal = JSON.parse(decodeURIComponent(encoded)); } catch(e) {}
+  const ageColor = deal.age>=60?'var(--red)':deal.age>=30?'var(--amber)':'var(--green)';
+  document.getElementById('mr2-deal-modal-title').textContent = deal.account + ' — Deal Detail';
+  document.getElementById('mr2-deal-modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      ${[
+        ['Account', deal.account],
+        ['Stage', deal.stage],
+        ['Product / Module', deal.product||'—'],
+        ['Account Manager', deal.am||'—'],
+        ['Potential MRR', fmtMrrFull(Number(deal.mrr)||0)],
+        ['Deal Age', deal.age+'d (entered pipeline '+deal.age+' days ago)'],
+        ['Delay Reason', deal.delayReason||'—'],
+      ].map(([l,v])=>`
+        <div style="background:var(--off-white);border-radius:8px;padding:12px">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:4px">${l}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-dark)">${v}</div>
+        </div>`).join('')}
+    </div>
+    <div style="padding:12px;background:${deal.age>=60?'#FFF5F5':deal.age>=30?'#FFFBF0':'#F0FAF0'};border-radius:8px;border-left:3px solid ${ageColor}">
+      <div style="font-size:11px;font-weight:700;color:${ageColor}">Pipeline Age Signal</div>
+      <div style="font-size:12px;color:var(--text-mid);margin-top:4px">${deal.age>=60?'This deal is critically stale — needs immediate review and decision':deal.age>=30?'This deal is aging — follow up required this week':'Deal is fresh — continue nurturing'}</div>
+    </div>
+    ${deal.notes?`<div style="margin-top:14px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:6px">Notes</div><div style="font-size:12px;color:var(--text-mid);line-height:1.7">${deal.notes}</div></div>`:''}
+  `;
+  openModal('modal-mr2-deal');
+}
+
+function openCsmActsDetail(csmName) {
+  const acc = centralData.accounts || [];
+  const csmAccNames = acc.filter(a=>(a['CSM']||a.csm)===csmName).map(a=>a['Company Name']||a.company);
+  const mtFilter = document.getElementById('mr2-act-type')?.value || '';
+  let reviews = mr2Reviews.filter(r => csmAccNames.includes(r['Account Name']||r.account));
+  if (mtFilter) reviews = reviews.filter(r=>(r['Meeting Type']||r.meetingType||'')===mtFilter);
+
+  let allOpen=[];
+  reviews.forEach(r=>{
+    try {
+      const acts=JSON.parse(r['Actionables']||r.actionables||'[]');
+      acts.filter(a=>a.status!=='Done').forEach(a=>allOpen.push({...a,account:r['Account Name']||r.account,meetingDate:r['Review Date']||r.reviewDate,meetingType:r['Meeting Type']||r.meetingType}));
+    }catch(e){}
+  });
+  allOpen.sort((a,b)=>{
+    const oa=a.due&&new Date(a.due)<new Date(),ob=b.due&&new Date(b.due)<new Date();
+    return ob-oa||(a.due||'zzz').localeCompare(b.due||'zzz');
+  });
+
+  document.getElementById('mr2-csm-acts-title').textContent = csmName + ' — All Open Actionables (' + allOpen.length + ')';
+  document.getElementById('mr2-csm-acts-body').innerHTML = allOpen.length ? `
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:var(--navy)">
+        <th style="padding:9px 12px;text-align:left;color:var(--gold);font-size:10px;font-weight:600">#</th>
+        <th style="padding:9px 12px;text-align:left;color:var(--gold);font-size:10px;font-weight:600">Action</th>
+        <th style="padding:9px 12px;text-align:left;color:var(--gold);font-size:10px;font-weight:600">Account</th>
+        <th style="padding:9px 12px;text-align:left;color:var(--gold);font-size:10px;font-weight:600">Owner</th>
+        <th style="padding:9px 12px;text-align:left;color:var(--gold);font-size:10px;font-weight:600">Due</th>
+        <th style="padding:9px 12px;text-align:left;color:var(--gold);font-size:10px;font-weight:600">Meeting</th>
+      </tr></thead>
+      <tbody>
+        ${allOpen.map((a,i)=>{
+          const ov=a.due&&new Date(a.due)<new Date();
+          return `<tr style="background:${ov?'#FFF5F5':i%2===0?'white':'var(--off-white)'};border-bottom:1px solid var(--border)">
+            <td style="padding:8px 12px;color:var(--text-light);font-weight:600">${i+1}</td>
+            <td style="padding:8px 12px;color:var(--text-dark)">${a.action}</td>
+            <td style="padding:8px 12px;color:var(--text-mid)">${a.account||'—'}</td>
+            <td style="padding:8px 12px;color:var(--text-mid)">${a.owner||'—'}</td>
+            <td style="padding:8px 12px;font-weight:${ov?'700':'400'};color:${ov?'var(--red)':'var(--text-mid)'}">${a.due||'—'}${ov?' ⚠':''}</td>
+            <td style="padding:8px 12px;font-size:10px;color:var(--text-light)">${a.meetingType||'—'} · ${a.meetingDate||'—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : '<div style="padding:24px;text-align:center;font-size:13px;color:var(--text-light)">No open actionables — all closed ✓</div>';
+  openModal('modal-mr2-csm-acts');
+}
 </script>
 </body>
 </html>
