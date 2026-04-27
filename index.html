@@ -16,7 +16,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text-dark);min-height:100vh;display:flex;}
-  #sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100;overflow-y:auto;}
+  #sidebar{width:var(--sidebar-w);height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100;overflow-y:auto;overflow-x:hidden;}
   .sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.07);}
   .sidebar-logo .logo-tag{font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);}
   .sidebar-logo .logo-sub{font-size:10px;color:var(--text-light);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
@@ -36,7 +36,7 @@
   .page-header h1{font-family:'DM Serif Display',serif;font-size:22px;}
   .page-header p{font-size:13px;color:var(--text-mid);margin-top:2px;}
   .page-header-actions{display:flex;gap:10px;align-items:center;}
-  .page-content{padding:24px 28px;}
+  .page-content{padding:24px 28px;overflow-x:auto;}
   .card{background:white;border-radius:12px;padding:20px;box-shadow:var(--card-shadow);border:1px solid var(--border);margin-bottom:16px;}
   .card-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:16px;}
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
@@ -571,6 +571,15 @@
           <div class="field"><label>Onboarding Status</label><select id="am-onboarding"><option>Not Started</option><option>In Progress</option><option selected>Live</option></select></div>
           <div class="field"><label>Go-Live Date</label><input type="date" id="am-golive"></div>
         </div>
+        <div class="section-label">Products in Use</div>
+        <div class="form-grid">
+          <div class="field" style="grid-column:1/-1"><label>Product / Modules Used</label>
+            <div class="multi-select-wrapper" id="ms-am-modules-wrap">
+              <div class="multi-select-display" id="ms-am-modules-display" onclick="toggleMs('am-modules')"><span class="ms-placeholder">Select modules in use...</span></div>
+              <div class="multi-select-dropdown" id="ms-am-modules-dropdown"></div>
+            </div>
+          </div>
+        </div>
         <div class="section-label">Account Ownership</div>
         <div class="form-grid">
           <div class="field"><label>Account Manager *</label><select id="am-am" required><option value="">Select AM</option><option>Swapnil Nawani</option><option>Vinay Kumar</option><option>Shivangi Nagarkoti</option><option>Khushi Mahajan</option><option>Abhishek Singh Jadaon</option><option>Hamza</option><option>Vaishali Mishra</option><option>Rushikesh</option><option>Suvarna</option><option>Manik Bedi</option><option>Vatsal Khosla</option><option>Upasana Negi</option><option>Tushar Rochlani</option><option>Charit Chopra</option></select></div>
@@ -695,7 +704,8 @@
             </div>
           </div>
           <div class="field"><label>Potential MRR (₹) *</label><input type="number" id="gr-mrr" required></div>
-          <div class="field"><label>One-time Value (₹)</label><input type="number" id="gr-onetime"></div>
+          <div class="field"><label>One-time MRR (₹)</label><input type="number" id="gr-onetime" placeholder="0 if none"></div>
+          <div class="field"><label>Number of Users</label><input type="number" id="gr-num-users" placeholder="e.g. 50"></div>
         </div>
         <div class="section-label">Stage & Timeline</div>
         <div class="form-grid">
@@ -851,6 +861,10 @@
             style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
             <option value="">All Growth</option>
             <option>High</option><option>Medium</option><option>Low</option>
+          </select>
+          <select id="acc-f-module" onchange="applyAccountFilters()"
+            style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;min-width:150px;">
+            <option value="">All Modules</option>
           </select>
           <div style="display:flex;align-items:center;gap:5px;">
             <span style="font-size:11px;color:var(--text-mid);white-space:nowrap;">SKAM</span>
@@ -1401,6 +1415,15 @@
       <div class="field"><label>Onboarding</label><select id="ea-onboarding"><option>Not Started</option><option>In Progress</option><option>Live</option></select></div>
       <div class="field"><label>Go-Live Date</label><input type="date" id="ea-golive"></div>
     </div>
+    <div class="section-label">Products in Use</div>
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1"><label>Product / Modules Used</label>
+        <div class="multi-select-wrapper" id="ms-ea-modules-wrap">
+          <div class="multi-select-display" id="ms-ea-modules-display" onclick="toggleMs('ea-modules')"><span class="ms-placeholder">Select modules in use...</span></div>
+          <div class="multi-select-dropdown" id="ms-ea-modules-dropdown"></div>
+        </div>
+      </div>
+    </div>
     <div class="section-label">Ownership</div>
     <div class="form-grid">
       <div class="field"><label>Account Manager</label><select id="ea-am"><option value="">Select AM</option><option>Swapnil Nawani</option><option>Vinay Kumar</option><option>Shivangi Nagarkoti</option><option>Khushi Mahajan</option><option>Abhishek Singh Jadaon</option><option>Hamza</option><option>Vaishali Mishra</option><option>Rushikesh</option><option>Suvarna</option><option>Manik Bedi</option><option>Vatsal Khosla</option><option>Upasana Negi</option><option>Tushar Rochlani</option><option>Charit Chopra</option></select></div>
@@ -1434,18 +1457,45 @@
     <input type="hidden" id="edit-row-index">
 
     <div style="background:var(--off-white);border-radius:10px;padding:14px;margin-bottom:16px;">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:10px;">Original Entry Details</div>
-      <div class="form-grid">
-        <div class="field"><label>Account</label><input type="text" id="edit-view-account" readonly style="background:var(--off-white);"></div>
-        <div class="field"><label>Account Manager</label><input type="text" id="edit-view-am" readonly style="background:var(--off-white);"></div>
-        <div class="field"><label>Opportunity Type</label><input type="text" id="edit-view-type" readonly style="background:var(--off-white);"></div>
-        <div class="field"><label>Product / Module(s)</label><input type="text" id="edit-view-products" readonly style="background:var(--off-white);"></div>
-        <div class="field"><label>Potential MRR (₹)</label><input type="text" id="edit-view-mrr" readonly style="background:var(--off-white);"></div>
-        <div class="field"><label>Planned Close</label><input type="text" id="edit-view-close" readonly style="background:var(--off-white);"></div>
-      </div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:4px;">Account (read-only)</div>
+      <input type="text" id="edit-view-account" readonly style="background:var(--off-white);border:none;font-size:13px;font-weight:600;color:var(--text-dark);width:100%;padding:4px 0;">
+      <input type="hidden" id="edit-view-am">
+      <input type="hidden" id="edit-view-type">
+      <input type="hidden" id="edit-view-products">
+      <input type="hidden" id="edit-view-mrr">
+      <input type="hidden" id="edit-view-close">
     </div>
 
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:10px;">Update</div>
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:10px;">Editable Details</div>
+    <div class="form-grid">
+      <div class="field"><label>Account Manager</label>
+        <select id="edit-am">
+          <option value="">Select AM</option>
+          <option>Swapnil Nawani</option><option>Vinay Kumar</option><option>Shivangi Nagarkoti</option>
+          <option>Khushi Mahajan</option><option>Abhishek Singh Jadaon</option><option>Hamza</option>
+          <option>Vaishali Mishra</option><option>Rushikesh</option><option>Suvarna</option>
+          <option>Manik Bedi</option><option>Vatsal Khosla</option><option>Upasana Negi</option>
+          <option>Tushar Rochlani</option><option>Charit Chopra</option>
+        </select>
+      </div>
+      <div class="field"><label>Opportunity Type</label>
+        <select id="edit-opp-type">
+          <option value="">—</option><option>Upsell</option><option>Cross-sell</option>
+          <option>User Growth</option><option>New Module</option>
+        </select>
+      </div>
+      <div class="field"><label>Product / Module(s)</label>
+        <div class="multi-select-wrapper" id="ms-edit-pip-wrap">
+          <div class="multi-select-display" id="ms-edit-pip-display" onclick="toggleMs('edit-pip')"><span class="ms-placeholder">Select module(s)...</span></div>
+          <div class="multi-select-dropdown" id="ms-edit-pip-dropdown"></div>
+        </div>
+      </div>
+      <div class="field"><label>Potential MRR (₹)</label><input type="number" id="edit-potential-mrr" min="0"></div>
+      <div class="field"><label>One-time MRR (₹)</label><input type="number" id="edit-onetime-mrr" min="0" placeholder="0 if none"></div>
+      <div class="field"><label>Number of Users</label><input type="number" id="edit-num-users" min="0" placeholder="e.g. 50"></div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:10px;margin-top:8px;">Stage & Timeline</div>
     <div class="form-grid">
       <div class="field"><label>Stage *</label>
         <select id="edit-stage" onchange="onEditStageChange(this.value)" required>
@@ -1589,10 +1639,10 @@
 
 <script>
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycby6dGWJRVBifytPPLJfAAAb77f3xehN5Ps0a1sk6xwxARapncXxUuJQAiAXc5IUuyzP/exec';
-const FA_MODULES=['DMS','SFA 2.0','SFA Expansion','MT','FA Connect','Power BI/Pulse','MicroMarket','Flo','Van Sales','Retailer App','EMS','Gamification','Incentive Module','Beat-O-Meter','Asset Management','Attendance Module','Product Recommendation','Route Optimisation','Image Recognition','Other'];
+const FA_MODULES=['DMS','SFA 2.0','SFA Expansion','MT','FA Connect','FA Nova','Power BI/Pulse','MicroMarket','Flo','Van Sales','Retailer App','EMS','Gamification','Incentive Module','Beat-O-Meter','Asset Management','Attendance Module','Product Recommendation','Route Optimisation','Image Recognition','Other'];
 const CSM_LIST=['Vaishali Uniyal','Bhawana Malinda','Kanika Tandon','Hardeep Singh'];
 const AM_LIST=['Swapnil Nawani','Vinay Kumar','Shivangi Nagarkoti','Khushi Mahajan','Abhishek Singh Jadaon','Hamza','Vaishali Mishra','Rushikesh','Suvarna','Manik Bedi','Vatsal Khosla','Upasana Negi','Tushar Rochlani','Charit Chopra'];
-const MS_SELECTIONS={demo:[],product:[]};
+const MS_SELECTIONS={demo:[],product:[],'am-modules':[],'ea-modules':[],'edit-pip':[]};
 let centralData={accounts:[],operational:[],pipeline:[],meetingReviews:[],targets:[],onboardings:[]};
 let allPipelineData=[];
 let currentPipelineFilter='all';
@@ -1683,7 +1733,7 @@ function handleOutsideClick(e){
 }
 
 // ── MULTI SELECT ──
-function buildMultiSelects(){['demo','product'].forEach(key=>{document.getElementById('ms-'+key+'-dropdown').innerHTML=FA_MODULES.map(m=>`<div class="ms-option"><input type="checkbox" id="msc-${key}-${m.replace(/\W/g,'_')}" onchange="msToggle('${key}','${m}')"><label for="msc-${key}-${m.replace(/\W/g,'_')}">${m}</label></div>`).join('');});}
+function buildMultiSelects(){['demo','product','am-modules','ea-modules','edit-pip'].forEach(key=>{const el=document.getElementById('ms-'+key+'-dropdown');if(!el)return;el.innerHTML=FA_MODULES.map(m=>`<div class="ms-option"><input type="checkbox" id="msc-${key}-${m.replace(/\W/g,'_')}" onchange="msToggle('${key}','${m}')"><label for="msc-${key}-${m.replace(/\W/g,'_')}">${m}</label></div>`).join('');});if(!MS_SELECTIONS['am-modules'])MS_SELECTIONS['am-modules']=[];if(!MS_SELECTIONS['ea-modules'])MS_SELECTIONS['ea-modules']=[];if(!MS_SELECTIONS['edit-pip'])MS_SELECTIONS['edit-pip']=[];}
 function toggleMs(key){document.getElementById('ms-'+key+'-dropdown').classList.toggle('open');document.getElementById('ms-'+key+'-display').classList.toggle('open');}
 function msToggle(key,val){const i=MS_SELECTIONS[key].indexOf(val);if(i===-1)MS_SELECTIONS[key].push(val);else MS_SELECTIONS[key].splice(i,1);renderMsTags(key);}
 function renderMsTags(key){const d=document.getElementById('ms-'+key+'-display');d.innerHTML=MS_SELECTIONS[key].length===0?'<span class="ms-placeholder">Select module(s)...</span>':MS_SELECTIONS[key].map(v=>`<span class="ms-tag">${v}<button type="button" onclick="msRemove('${key}','${v}');event.stopPropagation()">×</button></span>`).join('');}
@@ -1722,6 +1772,7 @@ async function submitAccountMaster(e){
       type:'account_master', timestamp:new Date().toISOString(),
       submittedBy: g('currentUser'), company,
       hq: g('am-hq'), mrr: g('am-mrr'),
+      productModules: (MS_SELECTIONS['am-modules']||[]).join(', '),
       onboarding: g('am-onboarding'), golive: g('am-golive'),
       accountStatus: document.getElementById('am-account-status')?.value || 'Active',
       am: g('am-am'), csm: g('am-csm'),
@@ -1735,6 +1786,7 @@ async function submitAccountMaster(e){
     showSaveConfirmation('am-save-confirmation', company);
     showToast('✅ Account saved — ' + company);
     document.getElementById('accountMasterForm').reset();
+    MS_SELECTIONS['am-modules']=[]; renderMsTags('am-modules');
   } catch(err) {
     showToast('Error saving account. Please try again.');
   } finally {
@@ -1807,6 +1859,7 @@ async function submitGrowth(e){
       oppType:g('gr-type'),leadType:g('gr-lead-type'),
       products:MS_SELECTIONS.product.join(', '),
       potentialMrr:mrr,oneTime:g('gr-onetime'),
+      numUsers:g('gr-num-users'),
       stage,closeDate,
       billingMonth:stage==='Closed Won'?(g('gr-real-year')+'-'+g('gr-real-month')):'',
       billed:g('gr-billed'),
@@ -1845,11 +1898,15 @@ function openEditAccount(idx){
     const key=f.replace(/-/g,'').replace('pm','PM ').replace('dm','DM ').replace('name','Name').replace('email','Email').replace('phone','Phone').replace('designation','Designation').trim();
     document.getElementById('ea-'+f).value=g(key.includes('PM')||key.includes('DM')?key:'PM '+key,f.replace('-',''));
   });
+  // Pre-fill product modules
+  const mods = (acc['Product Modules']||acc.productModules||'').split(',').map(s=>s.trim()).filter(Boolean);
+  MS_SELECTIONS['ea-modules'] = mods;
+  renderMsTags('ea-modules');
   openModal('editAccountModal');
 }
 async function saveEditedAccount(){
   const g=id=>document.getElementById(id).value;
-  await syncToSheets({type:'update_account',originalCompany:g('ea-original-company'),company:g('ea-company'),hq:g('ea-hq'),mrr:g('ea-mrr'),accountStatus:g('ea-status'),onboarding:g('ea-onboarding'),golive:g('ea-golive'),am:g('ea-am'),csm:g('ea-csm'),pmName:g('ea-pm-name'),pmEmail:g('ea-pm-email'),pmPhone:g('ea-pm-phone'),dmName:g('ea-dm-name'),dmDesignation:g('ea-dm-designation'),dmEmail:g('ea-dm-email'),dmPhone:g('ea-dm-phone'),updatedBy:g('currentUser'),updatedAt:new Date().toISOString()});
+  await syncToSheets({type:'update_account',originalCompany:g('ea-original-company'),company:g('ea-company'),hq:g('ea-hq'),mrr:g('ea-mrr'),accountStatus:g('ea-status'),onboarding:g('ea-onboarding'),golive:g('ea-golive'),am:g('ea-am'),csm:g('ea-csm'),productModules:(MS_SELECTIONS['ea-modules']||[]).join(', '),pmName:g('ea-pm-name'),pmEmail:g('ea-pm-email'),pmPhone:g('ea-pm-phone'),dmName:g('ea-dm-name'),dmDesignation:g('ea-dm-designation'),dmEmail:g('ea-dm-email'),dmPhone:g('ea-dm-phone'),updatedBy:g('currentUser'),updatedAt:new Date().toISOString()});
   closeModal('editAccountModal');
   showToast(g('ea-status')==='Churned'?'Marked Churned — '+g('ea-company'):'Updated — '+g('ea-company'));
   await fetchCentralData();loadAccountsList();
@@ -1865,12 +1922,23 @@ function openEditPipeline(idx){
   document.getElementById('edit-row-index').value=idx;
   document.getElementById('edit-entry-label').textContent=account+' · '+(p['Opportunity Type']||p.oppType||'')+ ' · ₹'+(Number(p['Potential MRR (₹)']||p.potentialMrr||0).toLocaleString('en-IN'));
 
-  // Read-only original details
+  // Account display + hidden originals
   document.getElementById('edit-view-account').value=account;
   document.getElementById('edit-view-am').value=p['Account Manager']||p.am||'';
   document.getElementById('edit-view-type').value=p['Opportunity Type']||p.oppType||'';
   document.getElementById('edit-view-products').value=p['Product/Modules']||p.products||'';
-  document.getElementById('edit-view-mrr').value='₹'+(Number(p['Potential MRR (₹)']||p.potentialMrr||0).toLocaleString('en-IN'));
+  document.getElementById('edit-view-mrr').value=p['Potential MRR (₹)']||p.potentialMrr||'';
+
+  // Editable fields
+  document.getElementById('edit-am').value=p['Account Manager']||p.am||'';
+  document.getElementById('edit-opp-type').value=p['Opportunity Type']||p.oppType||'';
+  document.getElementById('edit-potential-mrr').value=Number(p['Potential MRR (₹)']||p.potentialMrr||0)||'';
+  document.getElementById('edit-onetime-mrr').value=Number(p['One-time MRR']||p.oneTime||0)||'';
+  document.getElementById('edit-num-users').value=p['Number of Users']||p.numUsers||'';
+  // Pre-fill product multi-select
+  const editProds=(p['Product/Modules']||p.products||'').split(',').map(s=>s.trim()).filter(Boolean);
+  MS_SELECTIONS['edit-pip']=editProds;
+  renderMsTags('edit-pip');
 
   // Parse closeDate (YYYY-MM format)
   let closeMonthVal='',closeYearVal='';
@@ -1938,7 +2006,12 @@ async function saveEditedPipeline(){
     type:'update_pipeline',
     timestamp:p['Timestamp']||p.timestamp,
     account:p['Account Name']||p.account,
-    potentialMrr:p['Potential MRR (₹)']||p.potentialMrr||0,
+    am:g('edit-am')||p['Account Manager']||p.am||'',
+    oppType:g('edit-opp-type')||p['Opportunity Type']||p.oppType||'',
+    products:(MS_SELECTIONS['edit-pip']||[]).join(', ')||p['Product/Modules']||p.products||'',
+    potentialMrr:g('edit-potential-mrr')||p['Potential MRR (₹)']||p.potentialMrr||0,
+    oneTime:g('edit-onetime-mrr')||'',
+    numUsers:g('edit-num-users')||'',
     stage,closeDate,
     billed:g('edit-billed'),
     billingMonth:g('edit-billing-month'),
@@ -4668,9 +4741,13 @@ function applyAccountFilters(){
 
   // Read filter values
   const fName=(document.getElementById('acc-f-name')?.value||'').toLowerCase().trim();
+  // Populate module filter options from FA_MODULES if not yet done
+  const modDropEl=document.getElementById('acc-f-module');
+  if(modDropEl&&modDropEl.options.length<=1){FA_MODULES.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;modDropEl.appendChild(o);});}
   const fHq=(document.getElementById('acc-f-hq')?.value||'').toLowerCase().trim();
   const fAm=document.getElementById('acc-f-am')?.value||'';
   const fCsm=document.getElementById('acc-f-csm')?.value||'';
+  const fModule=document.getElementById('acc-f-module')?.value||'';
   renderCsmStrip(fCsm, 'csm-strip-accounts');
   const fStatus=document.getElementById('acc-f-status')?.value||'';
   const fOb=document.getElementById('acc-f-ob')?.value||'';
@@ -4685,6 +4762,7 @@ function applyAccountFilters(){
   if(fHq)   acc=acc.filter(a=>(a['Client HQ']||a.hq||'').toLowerCase().includes(fHq));
   if(fAm)   acc=acc.filter(a=>(a['Account Manager']||a.am||'')===fAm);
   if(fCsm)  acc=acc.filter(a=>(a['CSM']||a.csm||'')===fCsm);
+  if(fModule) acc=acc.filter(a=>(a['Product Modules']||a.productModules||'').split(',').map(s=>s.trim()).includes(fModule));
   if(fStatus) acc=acc.filter(a=>(a['Account Status']||a.accountStatus||'Active')===fStatus);
   if(fOb)   acc=acc.filter(a=>(a['Onboarding Status']||a.onboarding||'')===fOb);
   if(fRisk||fGrowth||fSkamOp) acc=acc.filter(a=>{
@@ -4715,6 +4793,7 @@ function applyAccountFilters(){
   if(fRisk)    activeFilters.push(`Risk: ${fRisk==='Yes'?'Flagged':'Clear'}`);
   if(fGrowth)  activeFilters.push(`Growth: ${fGrowth}`);
   if(fSkamOp&&fSkamNum!==null) activeFilters.push(`SKAM ${fSkamOp==='gte'?'≥':fSkamOp==='lte'?'≤':fSkamOp==='gt'?'>':fSkamOp==='lt'?'<':'='} ${fSkamNum}`);
+  if(fModule) activeFilters.push(`Module: ${fModule}`);
 
   const summaryEl=document.getElementById('acc-filter-summary');
   if(summaryEl){
@@ -4748,7 +4827,7 @@ function renderPipeline(stage){
   if(stage!=='all')data=data.filter(p=>(p['Opportunity Stage']||p.stage)===stage);
   if(!data.length){el.innerHTML='<div class="empty-state"><div class="icon">📈</div><p>No entries.</p></div>';return;}
   const total=data.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0);
-  el.innerHTML=`<div style="padding:12px 0 16px;font-size:13px;color:var(--text-mid);">${data.length} opportunities · MRR: <strong>₹${total.toLocaleString('en-IN')}</strong> ${getViewBadge()}</div><table><thead><tr><th>Account</th><th>AM</th><th>Type</th><th>Product(s)</th><th>Pot.MRR</th><th>Stage</th><th>Lead</th><th>Exp.Close</th><th>Billing</th><th>Billed</th><th>Age</th><th></th></tr></thead><tbody>${data.map(p=>{const s=p['Opportunity Stage']||p.stage,mrr=Number(p['Potential MRR (₹)']||p.potentialMrr||0),prod=p['Product/Modules']||p.products||'—',bm=p['Actual Billing Month']||p.billingMonth||'—';const age=daysSince(p['Timestamp']||p.timestamp);const isStale=age>30&&!['Closed Won','Closed Lost'].includes(s);return`<tr class="${isStale?'stale-row':''}"><td><strong>${p['Account Name']||p.account}</strong></td><td>${p['Account Manager']||p.am}</td><td><span class="badge badge-blue">${p['Opportunity Type']||p.oppType}</span></td><td style="max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${prod}">${prod}</td><td>₹${mrr.toLocaleString('en-IN')}</td><td><span class="badge ${s==='Closed Won'?'badge-green':s==='Closed Lost'?'badge-red':s==='Proposal Sent'?'badge-gold':'badge-blue'}">${s}</span></td><td>${p['Lead Type']||p.leadType||'—'}</td><td>${p['Expected Close Date']||p.closeDate||'—'}</td><td>${s==='Closed Won'?`<strong>${bm}</strong>`:bm}</td><td><span class="badge ${(p['Billed']||p.billed)==='Yes'?'badge-green':'badge-gray'}">${p['Billed']||p.billed||'No'}</span></td><td><span class="${age>30&&!['Closed Won','Closed Lost'].includes(s)?'age-stale':age>14?'age-warn':'age-fresh'}">${age}d</span></td><td><button class="btn-sm btn-edit" onclick="openEditPipeline(${p._idx})">Edit</button></td></tr>`;}).join('')}</tbody></table>`;
+  el.innerHTML=`<div style="padding:12px 0 16px;font-size:13px;color:var(--text-mid);">${data.length} opportunities · MRR: <strong>₹${total.toLocaleString('en-IN')}</strong> ${getViewBadge()}</div><table><thead><tr><th>Account</th><th>AM</th><th>Type</th><th>Product(s)</th><th>Pot.MRR</th><th>One-time</th><th>Stage</th><th>Lead</th><th>Exp.Close</th><th>Billing</th><th>Billed</th><th>Age</th><th></th></tr></thead><tbody>${data.map(p=>{const s=p['Opportunity Stage']||p.stage,mrr=Number(p['Potential MRR (₹)']||p.potentialMrr||0),prod=p['Product/Modules']||p.products||'—',bm=p['Actual Billing Month']||p.billingMonth||'—';const age=daysSince(p['Timestamp']||p.timestamp);const isStale=age>30&&!['Closed Won','Closed Lost'].includes(s);return`<tr class="${isStale?'stale-row':''}"><td><strong>${p['Account Name']||p.account}</strong></td><td>${p['Account Manager']||p.am}</td><td><span class="badge badge-blue">${p['Opportunity Type']||p.oppType}</span></td><td style="max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${prod}">${prod}</td><td>₹${mrr.toLocaleString('en-IN')}</td><td style="color:${Number(p['One-time MRR']||p.oneTime||0)>0?'var(--amber)':'var(--text-light)'}">${Number(p['One-time MRR']||p.oneTime||0)>0?'₹'+Number(p['One-time MRR']||p.oneTime||0).toLocaleString('en-IN'):'—'}</td><td><span class="badge ${s==='Closed Won'?'badge-green':s==='Closed Lost'?'badge-red':s==='Proposal Sent'?'badge-gold':'badge-blue'}">${s}</span></td><td>${p['Lead Type']||p.leadType||'—'}</td><td>${p['Expected Close Date']||p.closeDate||'—'}</td><td>${s==='Closed Won'?`<strong>${bm}</strong>`:bm}</td><td><span class="badge ${(p['Billed']||p.billed)==='Yes'?'badge-green':'badge-gray'}">${p['Billed']||p.billed||'No'}</span></td><td><span class="${age>30&&!['Closed Won','Closed Lost'].includes(s)?'age-stale':age>14?'age-warn':'age-fresh'}">${age}d</span></td><td><button class="btn-sm btn-edit" onclick="openEditPipeline(${p._idx})">Edit</button></td></tr>`;}).join('')}</tbody></table>`;
 }
 
 // ── EXPORT TO PDF ──
@@ -4868,6 +4947,57 @@ function buildCsmSummaryHtml(csm) {
     </div>`;
 }
 
+
+// ── Manager Review CSM Multi-Select Helpers ──
+function getMr2SelectedCsms(){
+  const cbs = document.querySelectorAll('.mr2-csm-cb:checked');
+  return Array.from(cbs).map(cb => cb.value);
+}
+
+function toggleMr2CsmDrop(){
+  const dd = document.getElementById('mr2-csm-dropdown');
+  if(dd) dd.style.display = dd.style.display==='none'?'block':'none';
+}
+
+function mr2CsmToggleAll(cb){
+  document.querySelectorAll('.mr2-csm-cb').forEach(c=>c.checked=cb.checked);
+  updateMr2CsmDisplay();
+  loadManagerReview();
+}
+
+function mr2CsmChange(){
+  const all = document.querySelectorAll('.mr2-csm-cb');
+  const checked = document.querySelectorAll('.mr2-csm-cb:checked');
+  const allCb = document.getElementById('mr2-csm-all');
+  if(allCb) allCb.checked = checked.length === all.length;
+  updateMr2CsmDisplay();
+  loadManagerReview();
+}
+
+function updateMr2CsmDisplay(){
+  const selected = getMr2SelectedCsms();
+  const display = document.getElementById('mr2-csm-display');
+  const placeholder = document.getElementById('mr2-csm-placeholder');
+  if(!display) return;
+  // Remove old pills
+  display.querySelectorAll('.csm-pill').forEach(p=>p.remove());
+  if(placeholder) placeholder.style.display = selected.length ? 'none' : 'inline';
+  selected.forEach(csm => {
+    const pill = document.createElement('span');
+    pill.className = 'csm-pill';
+    pill.style.cssText = 'background:var(--navy);color:white;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap';
+    pill.textContent = csm.split(' ')[0];
+    display.insertBefore(pill, placeholder||null);
+  });
+}
+
+// Close CSM dropdown on outside click
+document.addEventListener('click', function(e){
+  const wrap = document.getElementById('mr2-csm-wrap');
+  const dd = document.getElementById('mr2-csm-dropdown');
+  if(dd && wrap && !wrap.contains(e.target)) dd.style.display='none';
+}, true);
+
 // ════════════════════════════════════════════════════════════════
 // MANAGER REVIEW
 // ════════════════════════════════════════════════════════════════
@@ -4892,7 +5022,8 @@ function setMr2Period(days, btn) {
 }
 
 function loadManagerReview() {
-  const csm   = document.getElementById('mr2-csm')?.value || '';
+  const selectedCsms = getMr2SelectedCsms();
+  const csm = selectedCsms.length === 1 ? selectedCsms[0] : '';  // single for strip
   const health= document.getElementById('mr2-health')?.value || '';
   renderCsmStrip(csm, 'csm-strip-mr2');
   const acc   = centralData.accounts || [];
@@ -4904,7 +5035,7 @@ function loadManagerReview() {
 
   // Base: active accounts
   let active = acc.filter(a => (a['Account Status'] || 'Active') !== 'Churned');
-  if (csm) active = active.filter(a => (a['CSM'] || a.csm) === csm);
+  if (selectedCsms.length > 0) active = active.filter(a => selectedCsms.includes(a['CSM'] || a.csm));
 
   // Health filter
   const ls = getLatestSkam(ops);
@@ -4938,19 +5069,22 @@ function loadManagerReview() {
   // Pipeline filtered
   mr2PipData = pip.filter(p => {
     if (['Closed Won','Closed Lost'].includes(p['Opportunity Stage']||p.stage)) return false;
-    if (!csm) return true;
+    if (selectedCsms.length === 0) return true;
     const accName = p['Account Name'] || p.account;
     return active.some(a => (a['Company Name']||a.company) === accName);
   });
 
   // Summary line
   const sumEl = document.getElementById('mr2-summary');
-  if (sumEl) sumEl.textContent = active.length + ' accounts · ' + mr2PipData.length + ' open deals · ' + (csm||'All CSMs');
+  const csmLabel = selectedCsms.length === 0 ? 'All CSMs' : selectedCsms.length === 1 ? selectedCsms[0].split(' ')[0] : selectedCsms.map(n=>n.split(' ')[0]).join(', ');
+  if (sumEl) sumEl.textContent = active.length + ' accounts · ' + mr2PipData.length + ' open deals · ' + csmLabel;
 
   // Team Pulse (section 1) — only shown when no CSM filter
   const pulseSection = document.getElementById('mr2-team-pulse-section');
-  if (pulseSection) pulseSection.style.display = csm ? 'none' : 'block';
-  if (!csm) renderTeamPulse(acc, ops, pip, rev);
+  // Show pulse when all or multi-CSM selected; hide when exactly 1 CSM
+  const showPulse = selectedCsms.length !== 1;
+  if (pulseSection) pulseSection.style.display = showPulse ? 'block' : 'none';
+  if (showPulse) renderTeamPulse(acc, ops, pip, rev, selectedCsms);
 
   // Render all sections
   renderSkamDirection();
@@ -4960,10 +5094,11 @@ function loadManagerReview() {
 }
 
 // ── S1: TEAM PULSE ──────────────────────────────────────────────
-function renderTeamPulse(acc, ops, pip, rev) {
+function renderTeamPulse(acc, ops, pip, rev, selectedCsms) {
   const el = document.getElementById('mr2-team-pulse');
   if (!el) return;
-  const CSMs = ['Vaishali Uniyal','Bhawana Malinda','Kanika Tandon','Hardeep Singh'];
+  const allCSMs = ['Vaishali Uniyal','Bhawana Malinda','Kanika Tandon','Hardeep Singh'];
+  const CSMs = (selectedCsms && selectedCsms.length > 0) ? selectedCsms : allCSMs;
   const ls = getLatestSkam(ops);
   const d30 = new Date(Date.now() - 30*86400000);
 
@@ -5449,15 +5584,24 @@ function openCsmActsDetail(csmName) {
 
     <!-- ── FILTER BAR ── -->
     <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--card-shadow)">
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;position:relative">
         <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">CSM</label>
-        <select id="mr2-csm" onchange="loadManagerReview()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text-dark);min-width:140px">
-          <option value="">All CSMs</option>
-          <option>Vaishali Uniyal</option>
-          <option>Bhawana Malinda</option>
-          <option>Kanika Tandon</option>
-          <option>Hardeep Singh</option>
-        </select>
+        <div id="mr2-csm-wrap" style="position:relative">
+          <div id="mr2-csm-display" onclick="toggleMr2CsmDrop()" style="min-width:160px;padding:6px 28px 6px 10px;border:1px solid var(--border);border-radius:6px;background:white;font-size:12px;color:var(--text-dark);cursor:pointer;display:flex;align-items:center;gap:6px;flex-wrap:wrap;position:relative">
+            <span id="mr2-csm-placeholder" style="color:var(--text-light)">All CSMs</span>
+          </div>
+          <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:var(--text-light)">▾</div>
+          <div id="mr2-csm-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:200;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.12);min-width:180px;padding:6px">
+            <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-dark)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background=''">
+              <input type="checkbox" id="mr2-csm-all" onchange="mr2CsmToggleAll(this)" style="cursor:pointer"> All CSMs
+            </label>
+            <div style="height:1px;background:var(--border);margin:4px 0"></div>
+            <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-dark)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background=''"><input type="checkbox" class="mr2-csm-cb" value="Vaishali Uniyal" onchange="mr2CsmChange()"> Vaishali Uniyal</label>
+            <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-dark)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background=''"><input type="checkbox" class="mr2-csm-cb" value="Bhawana Malinda" onchange="mr2CsmChange()"> Bhawana Malinda</label>
+            <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-dark)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background=''"><input type="checkbox" class="mr2-csm-cb" value="Kanika Tandon" onchange="mr2CsmChange()"> Kanika Tandon</label>
+            <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-dark)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background=''"><input type="checkbox" class="mr2-csm-cb" value="Hardeep Singh" onchange="mr2CsmChange()"> Hardeep Singh</label>
+          </div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <label style="font-size:11px;font-weight:600;color:var(--text-mid);white-space:nowrap">Health</label>
