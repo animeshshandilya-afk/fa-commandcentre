@@ -3213,48 +3213,6 @@ function selectMom(){
 window.onload=()=>{ setTimeout(selectMom,400); };
 <\/script>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- MANAGER REVIEW PAGE -->
-<!-- ── AVP FORCE TAG MODAL ── -->
-<div id="modal-avp-tag" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:16px;width:420px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden">
-    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:2px">AVP Force Tag</div>
-        <div id="avp-tag-account-name" style="font-size:15px;font-weight:700;color:white"></div>
-      </div>
-      <button onclick="closeAvpTagModal()" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-    </div>
-    <input type="hidden" id="avp-tag-hidden-account">
-    <div style="padding:22px">
-      <div style="font-size:12px;color:var(--text-mid);margin-bottom:16px;line-height:1.6">Select a tag to force-mark this account. Tags are visible only to you (AVP view) and stored locally — no data is saved to the sheet.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-        <button id="avp-tag-btn-Stability-Risk" onclick="setAvpTag('Stability Risk')"
-          style="padding:14px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;text-align:left;transition:all .15s">
-          <div style="font-size:18px;margin-bottom:5px">⚠</div>
-          <div style="color:#DC2626">Stability Risk</div>
-          <div style="font-size:10px;color:var(--text-light);font-weight:400;margin-top:3px">Account health / retention concern</div>
-        </button>
-        <button id="avp-tag-btn-Growth-Risk" onclick="setAvpTag('Growth Risk')"
-          style="padding:14px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;text-align:left;transition:all .15s">
-          <div style="font-size:18px;margin-bottom:5px">◈</div>
-          <div style="color:#7C3AED">Growth Risk</div>
-          <div style="font-size:10px;color:var(--text-light);font-weight:400;margin-top:3px">Pipeline / expansion concern</div>
-        </button>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <button id="avp-tag-clear-btn" onclick="clearAvpTag(document.getElementById('avp-tag-hidden-account').value);closeAvpTagModal()"
-          style="padding:8px 16px;background:white;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;color:var(--text-mid);cursor:pointer;display:none">
-          ✕ Remove Tag
-        </button>
-        <button onclick="closeAvpTagModal()"
-          style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer;margin-left:auto">
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>`;
@@ -5896,6 +5854,48 @@ function closeAvpTagModal() {
   </div>
 </div>
 
+
+
+<!-- ── AVP FORCE TAG MODAL ── -->
+<div id="modal-avp-tag" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:16px;width:420px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:2px">AVP Force Tag</div>
+        <div id="avp-tag-account-name" style="font-size:15px;font-weight:700;color:white"></div>
+      </div>
+      <button onclick="closeAvpTagModal()" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <input type="hidden" id="avp-tag-hidden-account">
+    <div style="padding:22px">
+      <div style="font-size:12px;color:var(--text-mid);margin-bottom:16px;line-height:1.6">Select a tag to force-mark this account. Tags are visible only to you (AVP view) and stored locally — no data is saved to the sheet.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+        <button id="avp-tag-btn-Stability-Risk" onclick="setAvpTag('Stability Risk')"
+          style="padding:14px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;text-align:left;transition:all .15s">
+          <div style="font-size:18px;margin-bottom:5px">⚠</div>
+          <div style="color:#DC2626">Stability Risk</div>
+          <div style="font-size:10px;color:var(--text-light);font-weight:400;margin-top:3px">Account health / retention concern</div>
+        </button>
+        <button id="avp-tag-btn-Growth-Risk" onclick="setAvpTag('Growth Risk')"
+          style="padding:14px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;text-align:left;transition:all .15s">
+          <div style="font-size:18px;margin-bottom:5px">◈</div>
+          <div style="color:#7C3AED">Growth Risk</div>
+          <div style="font-size:10px;color:var(--text-light);font-weight:400;margin-top:3px">Pipeline / expansion concern</div>
+        </button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <button id="avp-tag-clear-btn" onclick="clearAvpTag(document.getElementById('avp-tag-hidden-account').value);closeAvpTagModal()"
+          style="padding:8px 16px;background:white;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;color:var(--text-mid);cursor:pointer;display:none">
+          ✕ Remove Tag
+        </button>
+        <button onclick="closeAvpTagModal()"
+          style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer;margin-left:auto">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
