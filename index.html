@@ -598,6 +598,13 @@
           <div class="field"><label>DM Email</label><input type="email" id="am-dm-email"></div>
           <div class="field"><label>DM Phone</label><input type="tel" id="am-dm-phone"></div>
         </div>
+        <div class="section-label">Tracker</div>
+        <div class="form-grid">
+          <div class="field" style="grid-column:1/-1">
+            <label>Tracker Link <span style="font-weight:400;color:var(--text-light)">(Google Sheet, Notion, Confluence etc.)</span></label>
+            <input type="url" id="am-tracker-link" placeholder="https://docs.google.com/spreadsheets/...">
+          </div>
+        </div>
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('accountMasterForm').reset()">Clear</button>
           <button type="submit" class="btn btn-primary">Save Account →</button>
@@ -1448,6 +1455,13 @@
       <div class="field"><label>DM Email</label><input type="email" id="ea-dm-email"></div>
       <div class="field"><label>DM Phone</label><input type="tel" id="ea-dm-phone"></div>
     </div>
+    <div class="section-label">Tracker</div>
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1">
+        <label>Tracker Link <span style="font-weight:400;color:var(--text-light)">(Google Sheet, Notion, Confluence etc.)</span></label>
+        <input type="url" id="ea-tracker-link" placeholder="https://...">
+      </div>
+    </div>
     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
       <button class="btn btn-secondary" onclick="closeModal('editAccountModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditedAccount()">Save Changes →</button>
@@ -1778,6 +1792,7 @@ async function submitAccountMaster(e){
       type:'account_master', timestamp:new Date().toISOString(),
       submittedBy: g('currentUser'), company,
       hq: g('am-hq'), mrr: g('am-mrr'),
+      trackerLink: g('am-tracker-link'),
       productModules: (MS_SELECTIONS['am-modules']||[]).join(', '),
       onboarding: g('am-onboarding'), golive: g('am-golive'),
       accountStatus: document.getElementById('am-account-status')?.value || 'Active',
@@ -1793,6 +1808,7 @@ async function submitAccountMaster(e){
     showToast('✅ Account saved — ' + company);
     document.getElementById('accountMasterForm').reset();
     MS_SELECTIONS['am-modules']=[]; renderMsTags('am-modules');
+    const tlEl=document.getElementById('am-tracker-link');if(tlEl)tlEl.value='';
   } catch(err) {
     showToast('Error saving account. Please try again.');
   } finally {
@@ -1908,11 +1924,14 @@ function openEditAccount(idx){
   const mods = (acc['Product Modules']||acc.productModules||'').split(',').map(s=>s.trim()).filter(Boolean);
   MS_SELECTIONS['ea-modules'] = mods;
   renderMsTags('ea-modules');
+  // Pre-fill tracker link
+  const tlEdit = document.getElementById('ea-tracker-link');
+  if (tlEdit) tlEdit.value = acc['Tracker Link'] || acc.trackerLink || '';
   openModal('editAccountModal');
 }
 async function saveEditedAccount(){
   const g=id=>document.getElementById(id).value;
-  await syncToSheets({type:'update_account',originalCompany:g('ea-original-company'),company:g('ea-company'),hq:g('ea-hq'),mrr:g('ea-mrr'),accountStatus:g('ea-status'),onboarding:g('ea-onboarding'),golive:g('ea-golive'),am:g('ea-am'),csm:g('ea-csm'),productModules:(MS_SELECTIONS['ea-modules']||[]).join(', '),pmName:g('ea-pm-name'),pmEmail:g('ea-pm-email'),pmPhone:g('ea-pm-phone'),dmName:g('ea-dm-name'),dmDesignation:g('ea-dm-designation'),dmEmail:g('ea-dm-email'),dmPhone:g('ea-dm-phone'),updatedBy:g('currentUser'),updatedAt:new Date().toISOString()});
+  await syncToSheets({type:'update_account',originalCompany:g('ea-original-company'),company:g('ea-company'),hq:g('ea-hq'),mrr:g('ea-mrr'),accountStatus:g('ea-status'),onboarding:g('ea-onboarding'),golive:g('ea-golive'),am:g('ea-am'),csm:g('ea-csm'),productModules:(MS_SELECTIONS['ea-modules']||[]).join(', '),trackerLink:g('ea-tracker-link'),pmName:g('ea-pm-name'),pmEmail:g('ea-pm-email'),pmPhone:g('ea-pm-phone'),dmName:g('ea-dm-name'),dmDesignation:g('ea-dm-designation'),dmEmail:g('ea-dm-email'),dmPhone:g('ea-dm-phone'),updatedBy:g('currentUser'),updatedAt:new Date().toISOString()});
   closeModal('editAccountModal');
   showToast(g('ea-status')==='Churned'?'Marked Churned — '+g('ea-company'):'Updated — '+g('ea-company'));
   await fetchCentralData();loadAccountsList();
@@ -4820,7 +4839,8 @@ function applyAccountFilters(){
     return;
   }
 
-  el.innerHTML=`<div style="padding:0 0 14px;font-size:13px;color:var(--text-mid);">Showing <strong>${acc.length}</strong> of ${allAcc.length} accounts ${getViewBadge()}</div><table><thead><tr><th>Company</th><th>HQ</th><th>MRR</th><th>AM</th><th>CSM</th><th>Onboarding</th><th>Status</th><th>SKAM</th><th>Risk</th><th>Growth</th>${isAvp?'<th style="color:#7C3AED;font-size:10px;letter-spacing:.05em">AVP TAG</th>':''}<th></th></tr></thead><tbody>${acc.map((a)=>{const n=a['Company Name']||a.company,sk=ls[n],s=sk?Number(sk['SKAM Score']||sk.skamScore):null,ob=a['Onboarding Status']||a.onboarding,st=a['Account Status']||a.accountStatus||'Active';const realIdx=(centralData.accounts||[]).indexOf(a);return`<tr class="${st==='Churned'?'churned-row':''}"><td><strong>${n}</strong></td><td>${a['Client HQ']||a.hq||'—'}</td><td>₹${Number(a['Current MRR (₹)']||a.mrr||0).toLocaleString('en-IN')}</td><td>${a['Account Manager']||a.am||'—'}</td><td>${a['CSM']||a.csm||'—'}</td><td><span class="badge ${ob==='Live'?'badge-green':ob==='In Progress'?'badge-amber':'badge-gray'}">${ob||'—'}</span></td><td><span class="badge ${st==='Churned'?'badge-red':st==='At Risk'?'badge-amber':'badge-green'}">${st}</span></td><td>${s!==null?`<span class="badge ${s>=70?'badge-green':s>=50?'badge-amber':'badge-red'}">${s}</span>`:'<span class="badge badge-gray">—</span>'}</td><td>${sk?`<span class="badge ${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'badge-red':'badge-green'}">${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'⚠ Risk':'Clear'}</span>`:'—'}</td><td>${sk?`<span class="badge ${(sk['Growth Flag']||sk.growthFlag)==='High'?'badge-green':(sk['Growth Flag']||sk.growthFlag)==='Medium'?'badge-amber':'badge-red'}">${sk['Growth Flag']||sk.growthFlag}</span>`:'—'}</td>${isAvp?`<td>${avpTags[n]?`<span style='display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:${avpTags[n]==='Stability Risk'?'rgba(220,38,38,.1)':'rgba(124,58,237,.1)'};color:${avpTags[n]==='Stability Risk'?'#DC2626':'#7C3AED'};border:1px solid ${avpTags[n]==='Stability Risk'?'rgba(220,38,38,.3)':'rgba(124,58,237,.3)'};'>${avpTags[n]==='Stability Risk'?'⚠':'◈'} ${avpTags[n]}<button onclick="clearAvpTag('${n.replace(/'/g,"'")}');event.stopPropagation()" style='background:none;border:none;cursor:pointer;font-size:12px;color:inherit;padding:0 0 0 4px;line-height:1'>×</button></span>`:'<span style="color:var(--text-light);font-size:11px">—</span>'}</td>`:''}\n<td style='white-space:nowrap'><button class="btn-sm btn-edit" onclick="openEditAccount(${realIdx})">Edit</button>${isAvp?`<button onclick="openAvpTagModal('${n.replace(/'/g,"'")}')" style='margin-left:4px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);color:#7C3AED;font-size:10px;font-weight:600;padding:3px 7px;border-radius:5px;cursor:pointer;font-family:inherit'>Tag ▾</button>`:''}</td></tr>`;}).join('')}</tbody></table>`;
+  el.innerHTML=`<div style="padding:0 0 14px;font-size:13px;color:var(--text-mid);">Showing <strong>${acc.length}</strong> of ${allAcc.length} accounts ${getViewBadge()}</div><table><thead><tr><th>Company</th><th>HQ</th><th>MRR</th><th>AM</th><th>CSM</th><th>Onboarding</th><th>Status</th><th>SKAM</th><th>Risk</th><th>Growth</th><th>Tracker</th>${isAvp?'<th style="color:#7C3AED;font-size:10px;letter-spacing:.05em">AVP TAG</th>':''}<th></th></tr></thead><tbody>${acc.map((a)=>{const n=a['Company Name']||a.company,sk=ls[n],s=sk?Number(sk['SKAM Score']||sk.skamScore):null,ob=a['Onboarding Status']||a.onboarding,st=a['Account Status']||a.accountStatus||'Active';const realIdx=(centralData.accounts||[]).indexOf(a);return`<tr class="${st==='Churned'?'churned-row':''}"><td><strong>${n}</strong></td><td>${a['Client HQ']||a.hq||'—'}</td><td>₹${Number(a['Current MRR (₹)']||a.mrr||0).toLocaleString('en-IN')}</td><td>${a['Account Manager']||a.am||'—'}</td><td>${a['CSM']||a.csm||'—'}</td><td><span class="badge ${ob==='Live'?'badge-green':ob==='In Progress'?'badge-amber':'badge-gray'}">${ob||'—'}</span></td><td><span class="badge ${st==='Churned'?'badge-red':st==='At Risk'?'badge-amber':'badge-green'}">${st}</span></td><td>${s!==null?`<span class="badge ${s>=70?'badge-green':s>=50?'badge-amber':'badge-red'}">${s}</span>`:'<span class="badge badge-gray">—</span>'}</td><td>${sk?`<span class="badge ${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'badge-red':'badge-green'}">${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'⚠ Risk':'Clear'}</span>`:'—'}</td><td>${sk?`<span class="badge ${(sk['Growth Flag']||sk.growthFlag)==='High'?'badge-green':(sk['Growth Flag']||sk.growthFlag)==='Medium'?'badge-amber':'badge-red'}">${sk['Growth Flag']||sk.growthFlag}</span>`:'—'}</td><td>${(a['Tracker Link']||a.trackerLink)?`<a href="${a['Tracker Link']||a.trackerLink}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--navy);text-decoration:none;padding:3px 8px;background:var(--off-white);border:1px solid var(--border);border-radius:5px" onclick="event.stopPropagation()">&#128279; Open</a>`:'<span style="font-size:11px;color:var(--text-light)">—</span>'}</td>
+${isAvp?`<td>${avpTags[n]?`<span style='display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:${avpTags[n]==='Stability Risk'?'rgba(220,38,38,.1)':'rgba(124,58,237,.1)'};color:${avpTags[n]==='Stability Risk'?'#DC2626':'#7C3AED'};border:1px solid ${avpTags[n]==='Stability Risk'?'rgba(220,38,38,.3)':'rgba(124,58,237,.3)'};'>${avpTags[n]==='Stability Risk'?'⚠':'◈'} ${avpTags[n]}<button onclick="clearAvpTag('${n.replace(/'/g,"'")}');event.stopPropagation()" style='background:none;border:none;cursor:pointer;font-size:12px;color:inherit;padding:0 0 0 4px;line-height:1'>×</button></span>`:'<span style="color:var(--text-light);font-size:11px">—</span>'}</td>`:''}\n<td style='white-space:nowrap'><button class="btn-sm btn-edit" onclick="openEditAccount(${realIdx})">Edit</button>${isAvp?`<button onclick="openAvpTagModal('${n.replace(/'/g,"'")}')" style='margin-left:4px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);color:#7C3AED;font-size:10px;font-weight:600;padding:3px 7px;border-radius:5px;cursor:pointer;font-family:inherit'>Tag ▾</button>`:''}</td></tr>`;}).join('')}</tbody></table>`;
 }
 
 function clearAccountFilters(){
