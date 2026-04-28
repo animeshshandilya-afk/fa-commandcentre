@@ -866,7 +866,13 @@
             style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;min-width:150px;">
             <option value="">All Modules</option>
           </select>
-          <div style="display:flex;align-items:center;gap:5px;">
+          
+          <select id="acc-f-avp-tag" onchange="applyAccountFilters()"
+            style="display:none;padding:7px 10px;border:1.5px solid #7C3AED;border-radius:7px;font-family:inherit;font-size:12px;background:white;color:#7C3AED;font-weight:600;min-width:150px;">
+            <option value="">All Tags</option>
+            <option value="Stability Risk">Stability Risk</option>
+            <option value="Growth Risk">Growth Risk</option>
+          </select><div style="display:flex;align-items:center;gap:5px;">
             <span style="font-size:11px;color:var(--text-mid);white-space:nowrap;">SKAM</span>
             <select id="acc-f-skam-op" onchange="applyAccountFilters()"
               style="padding:7px 7px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:white;">
@@ -3208,7 +3214,49 @@ window.onload=()=>{ setTimeout(selectMom,400); };
 <\/script>
 
 <!-- ══════════════════════════════════════════════════════════ -->
-<!-- MANAGER REVIEW PAGE --></body>
+<!-- MANAGER REVIEW PAGE -->
+<!-- ── AVP FORCE TAG MODAL ── -->
+<div id="modal-avp-tag" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:16px;width:420px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden">
+    <div style="padding:18px 22px;background:var(--navy);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:2px">AVP Force Tag</div>
+        <div id="avp-tag-account-name" style="font-size:15px;font-weight:700;color:white"></div>
+      </div>
+      <button onclick="closeAvpTagModal()" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <input type="hidden" id="avp-tag-hidden-account">
+    <div style="padding:22px">
+      <div style="font-size:12px;color:var(--text-mid);margin-bottom:16px;line-height:1.6">Select a tag to force-mark this account. Tags are visible only to you (AVP view) and stored locally — no data is saved to the sheet.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+        <button id="avp-tag-btn-Stability-Risk" onclick="setAvpTag('Stability Risk')"
+          style="padding:14px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;text-align:left;transition:all .15s">
+          <div style="font-size:18px;margin-bottom:5px">⚠</div>
+          <div style="color:#DC2626">Stability Risk</div>
+          <div style="font-size:10px;color:var(--text-light);font-weight:400;margin-top:3px">Account health / retention concern</div>
+        </button>
+        <button id="avp-tag-btn-Growth-Risk" onclick="setAvpTag('Growth Risk')"
+          style="padding:14px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;text-align:left;transition:all .15s">
+          <div style="font-size:18px;margin-bottom:5px">◈</div>
+          <div style="color:#7C3AED">Growth Risk</div>
+          <div style="font-size:10px;color:var(--text-light);font-weight:400;margin-top:3px">Pipeline / expansion concern</div>
+        </button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <button id="avp-tag-clear-btn" onclick="clearAvpTag(document.getElementById('avp-tag-hidden-account').value);closeAvpTagModal()"
+          style="padding:8px 16px;background:white;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;color:var(--text-mid);cursor:pointer;display:none">
+          ✕ Remove Tag
+        </button>
+        <button onclick="closeAvpTagModal()"
+          style="padding:8px 20px;background:var(--off-white);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer;margin-left:auto">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
 </html>`;
 
   const win = window.open('', '_blank');
@@ -4740,6 +4788,11 @@ function applyAccountFilters(){
   let acc=filterAccountsByUser(allAcc);
 
   // Read filter values
+  const isAvp = getUserRole() === 'leadership';
+  const avpTags = getAvpTags();
+  const tagFilterEl = document.getElementById('acc-f-avp-tag');
+  if (tagFilterEl) tagFilterEl.style.display = isAvp ? '' : 'none';
+  const fAvpTag = isAvp ? (tagFilterEl?.value || '') : '';
   const fName=(document.getElementById('acc-f-name')?.value||'').toLowerCase().trim();
   // Populate module filter options from FA_MODULES if not yet done
   const modDropEl=document.getElementById('acc-f-module');
@@ -4763,6 +4816,7 @@ function applyAccountFilters(){
   if(fAm)   acc=acc.filter(a=>(a['Account Manager']||a.am||'')===fAm);
   if(fCsm)  acc=acc.filter(a=>(a['CSM']||a.csm||'')===fCsm);
   if(fModule) acc=acc.filter(a=>(a['Product Modules']||a.productModules||'').split(',').map(s=>s.trim()).includes(fModule));
+  if(fAvpTag) acc=acc.filter(a=>avpTags[a['Company Name']||a.company]===fAvpTag);
   if(fStatus) acc=acc.filter(a=>(a['Account Status']||a.accountStatus||'Active')===fStatus);
   if(fOb)   acc=acc.filter(a=>(a['Onboarding Status']||a.onboarding||'')===fOb);
   if(fRisk||fGrowth||fSkamOp) acc=acc.filter(a=>{
@@ -4808,7 +4862,7 @@ function applyAccountFilters(){
     return;
   }
 
-  el.innerHTML=`<div style="padding:0 0 14px;font-size:13px;color:var(--text-mid);">Showing <strong>${acc.length}</strong> of ${allAcc.length} accounts ${getViewBadge()}</div><table><thead><tr><th>Company</th><th>HQ</th><th>MRR</th><th>AM</th><th>CSM</th><th>Onboarding</th><th>Status</th><th>SKAM</th><th>Risk</th><th>Growth</th><th></th></tr></thead><tbody>${acc.map((a)=>{const n=a['Company Name']||a.company,sk=ls[n],s=sk?Number(sk['SKAM Score']||sk.skamScore):null,ob=a['Onboarding Status']||a.onboarding,st=a['Account Status']||a.accountStatus||'Active';const realIdx=(centralData.accounts||[]).indexOf(a);return`<tr class="${st==='Churned'?'churned-row':''}"><td><strong>${n}</strong></td><td>${a['Client HQ']||a.hq||'—'}</td><td>₹${Number(a['Current MRR (₹)']||a.mrr||0).toLocaleString('en-IN')}</td><td>${a['Account Manager']||a.am||'—'}</td><td>${a['CSM']||a.csm||'—'}</td><td><span class="badge ${ob==='Live'?'badge-green':ob==='In Progress'?'badge-amber':'badge-gray'}">${ob||'—'}</span></td><td><span class="badge ${st==='Churned'?'badge-red':st==='At Risk'?'badge-amber':'badge-green'}">${st}</span></td><td>${s!==null?`<span class="badge ${s>=70?'badge-green':s>=50?'badge-amber':'badge-red'}">${s}</span>`:'<span class="badge badge-gray">—</span>'}</td><td>${sk?`<span class="badge ${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'badge-red':'badge-green'}">${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'⚠ Risk':'Clear'}</span>`:'—'}</td><td>${sk?`<span class="badge ${(sk['Growth Flag']||sk.growthFlag)==='High'?'badge-green':(sk['Growth Flag']||sk.growthFlag)==='Medium'?'badge-amber':'badge-red'}">${sk['Growth Flag']||sk.growthFlag}</span>`:'—'}</td><td><button class="btn-sm btn-edit" onclick="openEditAccount(${realIdx})">Edit</button></td></tr>`;}).join('')}</tbody></table>`;
+  el.innerHTML=`<div style="padding:0 0 14px;font-size:13px;color:var(--text-mid);">Showing <strong>${acc.length}</strong> of ${allAcc.length} accounts ${getViewBadge()}</div><table><thead><tr><th>Company</th><th>HQ</th><th>MRR</th><th>AM</th><th>CSM</th><th>Onboarding</th><th>Status</th><th>SKAM</th><th>Risk</th><th>Growth</th>${isAvp?'<th style="color:#7C3AED;font-size:10px;letter-spacing:.05em">AVP TAG</th>':''}<th></th></tr></thead><tbody>${acc.map((a)=>{const n=a['Company Name']||a.company,sk=ls[n],s=sk?Number(sk['SKAM Score']||sk.skamScore):null,ob=a['Onboarding Status']||a.onboarding,st=a['Account Status']||a.accountStatus||'Active';const realIdx=(centralData.accounts||[]).indexOf(a);return`<tr class="${st==='Churned'?'churned-row':''}"><td><strong>${n}</strong></td><td>${a['Client HQ']||a.hq||'—'}</td><td>₹${Number(a['Current MRR (₹)']||a.mrr||0).toLocaleString('en-IN')}</td><td>${a['Account Manager']||a.am||'—'}</td><td>${a['CSM']||a.csm||'—'}</td><td><span class="badge ${ob==='Live'?'badge-green':ob==='In Progress'?'badge-amber':'badge-gray'}">${ob||'—'}</span></td><td><span class="badge ${st==='Churned'?'badge-red':st==='At Risk'?'badge-amber':'badge-green'}">${st}</span></td><td>${s!==null?`<span class="badge ${s>=70?'badge-green':s>=50?'badge-amber':'badge-red'}">${s}</span>`:'<span class="badge badge-gray">—</span>'}</td><td>${sk?`<span class="badge ${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'badge-red':'badge-green'}">${(sk['Risk Flag']||sk.riskFlag)==='Yes'?'⚠ Risk':'Clear'}</span>`:'—'}</td><td>${sk?`<span class="badge ${(sk['Growth Flag']||sk.growthFlag)==='High'?'badge-green':(sk['Growth Flag']||sk.growthFlag)==='Medium'?'badge-amber':'badge-red'}">${sk['Growth Flag']||sk.growthFlag}</span>`:'—'}</td>${isAvp?`<td>${avpTags[n]?`<span style='display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:${avpTags[n]==='Stability Risk'?'rgba(220,38,38,.1)':'rgba(124,58,237,.1)'};color:${avpTags[n]==='Stability Risk'?'#DC2626':'#7C3AED'};border:1px solid ${avpTags[n]==='Stability Risk'?'rgba(220,38,38,.3)':'rgba(124,58,237,.3)'};'>${avpTags[n]==='Stability Risk'?'⚠':'◈'} ${avpTags[n]}<button onclick="clearAvpTag('${n.replace(/'/g,"'")}');event.stopPropagation()" style='background:none;border:none;cursor:pointer;font-size:12px;color:inherit;padding:0 0 0 4px;line-height:1'>×</button></span>`:'<span style="color:var(--text-light);font-size:11px">—</span>'}</td>`:''}\n<td style='white-space:nowrap'><button class="btn-sm btn-edit" onclick="openEditAccount(${realIdx})">Edit</button>${isAvp?`<button onclick="openAvpTagModal('${n.replace(/'/g,"'")}')" style='margin-left:4px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);color:#7C3AED;font-size:10px;font-weight:600;padding:3px 7px;border-radius:5px;cursor:pointer;font-family:inherit'>Tag ▾</button>`:''}</td></tr>`;}).join('')}</tbody></table>`;
 }
 
 function clearAccountFilters(){
@@ -5569,6 +5623,72 @@ function openCsmActsDetail(csmName) {
       </tbody>
     </table>` : '<div style="padding:24px;text-align:center;font-size:13px;color:var(--text-light)">No open actionables — all closed ✓</div>';
   openModal('modal-mr2-csm-acts');
+}
+
+// ════════════════════════════════════════════════════════════════
+// AVP FORCE TAGS — localStorage only, AVP-view only
+// ════════════════════════════════════════════════════════════════
+const AVP_TAG_KEY = 'fa_avp_tags_v1';
+
+function getAvpTags() {
+  try { return JSON.parse(localStorage.getItem(AVP_TAG_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+
+function saveAvpTags(tags) {
+  localStorage.setItem(AVP_TAG_KEY, JSON.stringify(tags));
+}
+
+function openAvpTagModal(accountName) {
+  const tags = getAvpTags();
+  const current = tags[accountName] || '';
+  const modal = document.getElementById('modal-avp-tag');
+  document.getElementById('avp-tag-account-name').textContent = accountName;
+  document.getElementById('avp-tag-hidden-account').value = accountName;
+  // Set active button state
+  ['Stability Risk', 'Growth Risk'].forEach(t => {
+    const btn = document.getElementById('avp-tag-btn-' + t.replace(' ', '-'));
+    if (!btn) return;
+    const isSel = current === t;
+    if (t === 'Stability Risk') {
+      btn.style.background = isSel ? 'rgba(220,38,38,.15)' : 'white';
+      btn.style.borderColor = isSel ? '#DC2626' : 'var(--border)';
+      btn.style.color = isSel ? '#DC2626' : 'var(--text-dark)';
+      btn.style.fontWeight = isSel ? '700' : '400';
+    } else {
+      btn.style.background = isSel ? 'rgba(124,58,237,.15)' : 'white';
+      btn.style.borderColor = isSel ? '#7C3AED' : 'var(--border)';
+      btn.style.color = isSel ? '#7C3AED' : 'var(--text-dark)';
+      btn.style.fontWeight = isSel ? '700' : '400';
+    }
+  });
+  const clearBtn = document.getElementById('avp-tag-clear-btn');
+  if (clearBtn) clearBtn.style.display = current ? '' : 'none';
+  modal.style.display = 'flex';
+}
+
+function setAvpTag(tag) {
+  const account = document.getElementById('avp-tag-hidden-account').value;
+  if (!account) return;
+  const tags = getAvpTags();
+  tags[account] = tag;
+  saveAvpTags(tags);
+  closeAvpTagModal();
+  applyAccountFilters();
+  showToast('Tagged: ' + account + ' → ' + tag);
+}
+
+function clearAvpTag(account) {
+  const tags = getAvpTags();
+  delete tags[account];
+  saveAvpTags(tags);
+  applyAccountFilters();
+  showToast('Tag removed');
+}
+
+function closeAvpTagModal() {
+  const modal = document.getElementById('modal-avp-tag');
+  if (modal) modal.style.display = 'none';
 }
 </script>
 
