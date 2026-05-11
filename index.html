@@ -258,6 +258,8 @@
     <div class="nav-section">Records</div>
     <div class="nav-item" onclick="showPage('accounts-list',this)"><span>≡</span> All Accounts</div>
     <div class="nav-item" onclick="showPage('pipeline-list',this)"><span>◎</span> Pipeline View</div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);margin:8px 12px;"></div>
+    <div class="nav-item" onclick="window.open('https://animeshshandilya-afk.github.io/fa-helpdesk/','_blank')" style="color:rgba(255,255,255,0.45);font-size:11px;"><span>🛠</span> FA Help Desk ↗</div>
   </nav>
   <div class="sidebar-status">
     <div style="font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:.08em;">Sheet Sync</div>
@@ -904,6 +906,20 @@
   <div id="page-pipeline-list" class="page">
     <div class="page-header"><div><h1>Pipeline View</h1><p>All growth opportunities — aging flags highlight stale deals</p></div><button class="btn btn-secondary" onclick="fetchCentralData().then(loadPipelineList)">↻ Refresh</button></div>
     <div class="page-content">
+      <!-- Filter bar -->
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="pl-filter-account" placeholder="Search account…" oninput="renderPipeline(currentPipelineFilter)"
+          style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;width:180px;color:var(--text-dark);outline:none;">
+        <select id="pl-filter-am" onchange="renderPipeline(currentPipelineFilter)"
+          style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-dark);background:white;">
+          <option value="">All Account Managers</option>
+        </select>
+        <select id="pl-filter-csm" onchange="renderPipeline(currentPipelineFilter)"
+          style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-dark);background:white;">
+          <option value="">All CSMs</option>
+        </select>
+        <button onclick="clearPipelineFilters()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:white;color:var(--text-mid);cursor:pointer;">✕ Clear</button>
+      </div>
       <div style="display:flex;gap:4px;margin-bottom:24px;background:var(--off-white);padding:4px;border-radius:10px;width:fit-content;">
         <div class="tab active" onclick="filterPipeline('all',this)">All</div>
         <div class="tab" onclick="filterPipeline('Identified',this)">Identified</div>
@@ -1639,6 +1655,17 @@
 </div>
 
 
+<!-- CSM WON DRILLDOWN MODAL (Manager Review) -->
+<div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;" id="csmWonModal">
+  <div style="background:white;border-radius:16px;padding:28px;width:640px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h2 style="font-family:'DM Serif Display',serif;font-size:20px;" id="csm-won-title">Won Pipeline</h2>
+      <button class="btn btn-secondary" onclick="closeModal('csmWonModal')">✕ Close</button>
+    </div>
+    <div id="csm-won-content"></div>
+  </div>
+</div>
+
 <!-- DELAYED MRR DRILLDOWN MODAL -->
 <div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;" id="delayedMrrModal">
   <div style="background:white;border-radius:16px;padding:28px;width:560px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
@@ -1958,7 +1985,7 @@ function openEditPipeline(idx){
   document.getElementById('edit-am').value=p['Account Manager']||p.am||'';
   document.getElementById('edit-opp-type').value=p['Opportunity Type']||p.oppType||'';
   document.getElementById('edit-potential-mrr').value=Number(p['Potential MRR (₹)']||p.potentialMrr||0)||'';
-  document.getElementById('edit-onetime-mrr').value=Number(p['One-time MRR']||p.oneTime||0)||'';
+  document.getElementById('edit-onetime-mrr').value=Number(p['One-time Value (₹)']||p['One-time MRR']||p.oneTime||0)||'';
   document.getElementById('edit-num-users').value=p['Number of Users']||p.numUsers||'';
   // Pre-fill product multi-select
   const editProds=(p['Product/Modules']||p.products||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -2054,6 +2081,7 @@ async function saveEditedPipeline(){
   await syncToSheets(payload);
   closeModal('editPipelineModal');showToast('Pipeline updated');
   await fetchCentralData();loadPipelineList();
+  refreshMrrRibbon(); // B2 fix: update ribbon numbers only — avoids chart re-render on hidden canvas
 }
 function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';}
@@ -4313,6 +4341,101 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 // ── DELAYED MRR DRILLDOWN ──
+// ── SAFE RIBBON REFRESH ──
+// Called after pipeline edits. Updates all MRR tiles/NRR ribbon without touching chart canvases.
+// Calling loadDashboard() from a hidden page re-renders charts onto zero-width canvases — don't do it.
+function refreshMrrRibbon(){
+  try{
+    const allAcc=centralData.accounts||[],ops=centralData.operational||[],pip=centralData.pipeline||[];
+    const activeAcc=allAcc.filter(a=>(a['Account Status']||'Active')!=='Churned');
+    const churnedAcc=allAcc.filter(a=>(a['Account Status']||'')===  'Churned');
+    const acc=filterAccountsByUser(activeAcc);
+    const myPip=filterPipelineByUser(pip);
+    const myChurned=getUserRole()==='leadership'?churnedAcc:filterAccountsByUser(churnedAcc);
+    const {nrr,startingMrr,activeMrr,expansionMrr,churnMrr}=calculateNRR(acc,myChurned,myPip);
+    const fmtFull=v=>v?'₹'+Number(v).toLocaleString('en-IN'):'₹0';
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    // NRR ribbon
+    const nrrEl=document.getElementById('nrr-value');
+    if(nrrEl){nrrEl.textContent=nrr!==null?nrr+'%':'—';if(nrr!==null)nrrEl.style.color=nrr>=100?'#27AE60':nrr>=90?'#F39C12':'#E74C3C';}
+    set('nrr-health',nrr===null?'Add data to calculate':nrr>=100?'▲ Growing — expansion exceeding churn':nrr>=90?'→ Stable — minor revenue leakage':'▼ Intervention needed — churn exceeding expansion');
+    set('nrr-starting',fmtMrr(startingMrr));
+    set('nrr-expansion','+'+fmtMrr(expansionMrr));
+    set('nrr-churn','-'+fmtMrr(churnMrr));
+    set('nrr-net',fmtMrr(activeMrr));
+    // Total MRR banner
+    const pendingWonMrr=myPip.filter(p=>(p['Opportunity Stage']||p.stage)==='Closed Won'&&(p['MRR Updated']||p.mrrUpdated)!=='Yes').reduce((s,p)=>s+(Number(p['Actual Realised MRR']||p.realisedMrr||p['Potential MRR (₹)']||p.potentialMrr)||0),0);
+    const totalMrrVal=activeMrr+pendingWonMrr;
+    const churnMrrTotal=myChurned.reduce((s,a)=>s+(Number(a['Current MRR (₹)']||a.mrr)||0),0);
+    set('total-mrr-main',fmtFull(totalMrrVal));
+    set('total-mrr-base',fmtFull(activeMrr));
+    set('total-mrr-won',pendingWonMrr>0?'+'+fmtFull(pendingWonMrr):'₹0');
+    set('total-mrr-churn',churnMrrTotal>0?'-'+fmtFull(churnMrrTotal):'₹0');
+    set('total-mrr-churn-sub',myChurned.length+' account'+(myChurned.length!==1?'s':'')+' churned');
+    set('total-mrr-avg',acc.length>0?fmtFull(Math.round(totalMrrVal/acc.length)):'—');
+    set('total-mrr-count',acc.length+' active account'+(acc.length!==1?'s':''));
+    // Stat cards
+    const openPip=myPip.filter(p=>!['Closed Won','Closed Lost'].includes(p['Opportunity Stage']||p.stage));
+    const wonPip=myPip.filter(p=>(p['Opportunity Stage']||p.stage)==='Closed Won');
+    set('stat-won-mrr',fmtMrr(wonPip.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0)));
+    set('stat-pipeline',fmtMrr(openPip.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0)));
+    const chMrr=myChurned.reduce((s,a)=>s+(Number(a['Current MRR (₹)']||a.mrr)||0),0);
+    set('stat-churn-mrr',fmtMrr(chMrr)||'₹0');
+    set('stat-churn-sub',myChurned.length+' account'+(myChurned.length!==1?'s':'')+' churned');
+  }catch(e){console.warn('refreshMrrRibbon error:',e);}
+}
+
+// ── CSM WON DRILL-DOWN (Manager Review) ──
+function showCsmWonDrilldown(csm){
+  const pip=centralData.pipeline||[];
+  const acc=centralData.accounts||[];
+  const myAccNames=new Set(acc.filter(a=>(a['CSM']||a.csm||'')===csm).map(a=>a['Company Name']||a.company||''));
+  const wonItems=pip.filter(p=>(p['Opportunity Stage']||p.stage)==='Closed Won'&&myAccNames.has(p['Account Name']||p.account||''));
+  const totalWon=wonItems.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0);
+
+  document.getElementById('csm-won-title').textContent=csm.split(' ')[0]+' — Closed Won Pipeline';
+  if(!wonItems.length){
+    document.getElementById('csm-won-content').innerHTML='<div style="text-align:center;padding:32px;color:var(--text-light);font-size:13px;">No Closed Won items on record for this CSM.</div>';
+  } else {
+    const rows=wonItems.map(p=>{
+      const mrr=Number(p['Potential MRR (₹)']||p.potentialMrr||0);
+      const stage=p['Opportunity Stage']||p.stage||'';
+      const mrrUpd=(p['MRR Updated']||p.mrrUpdated||'No')==='Yes';
+      return `<tr>
+        <td style="font-weight:600;font-size:12px;">${p['Account Name']||p.account||'—'}</td>
+        <td style="font-size:12px;">${p['Product/Modules']||p.products||'—'}</td>
+        <td style="font-size:12px;font-weight:700;color:var(--green);">₹${mrr.toLocaleString('en-IN')}</td>
+        <td style="font-size:11px;">${p['Expected Close Date']||p.closeDate||'—'}</td>
+        <td style="font-size:11px;">${p['Actual Billing Month']||p.billingMonth||'—'}</td>
+        <td><span class="badge ${mrrUpd?'badge-green':'badge-amber'}" style="font-size:10px;">${mrrUpd?'✓ Booked':'Pending'}</span></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('csm-won-content').innerHTML=`
+      <div style="display:flex;gap:16px;margin-bottom:20px;">
+        <div style="flex:1;background:var(--off-white);border-radius:10px;padding:14px 18px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:4px;">Total Won MRR</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green);">₹${totalWon.toLocaleString('en-IN')}</div>
+        </div>
+        <div style="flex:1;background:var(--off-white);border-radius:10px;padding:14px 18px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);margin-bottom:4px;">Items Won</div>
+          <div style="font-size:22px;font-weight:800;color:var(--navy);">${wonItems.length}</div>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:var(--off-white);">
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);">Account</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);">Product(s)</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);">Won MRR</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);">Close Date</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);">Billing Month</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);">MRR Status</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+  openModal('csmWonModal');
+}
+
 function showDelayedMrrDrilldown(type){
   const pip=centralData.pipeline||[];
   let title='';let items=[];
@@ -4850,16 +4973,50 @@ function clearAccountFilters(){
 }
 
 // ── PIPELINE LIST ──
-function loadPipelineList(){allPipelineData=centralData.pipeline||[];renderPipeline(currentPipelineFilter);}
+function loadPipelineList(){
+  allPipelineData=centralData.pipeline||[];
+  // Populate AM dropdown
+  const amSel=document.getElementById('pl-filter-am');
+  if(amSel){
+    const ams=[...new Set(allPipelineData.map(p=>p['Account Manager']||p.am||'').filter(Boolean))].sort();
+    const curAm=amSel.value;
+    amSel.innerHTML='<option value="">All Account Managers</option>'+ams.map(a=>`<option value="${a}"${a===curAm?'selected':''}>${a}</option>`).join('');
+  }
+  // Populate CSM dropdown (from Account_Master)
+  const csmSel=document.getElementById('pl-filter-csm');
+  if(csmSel){
+    const csms=[...new Set((centralData.accounts||[]).map(a=>a['CSM']||a.csm||'').filter(Boolean))].sort();
+    const curCsm=csmSel.value;
+    csmSel.innerHTML='<option value="">All CSMs</option>'+csms.map(c=>`<option value="${c}"${c===curCsm?'selected':''}>${c}</option>`).join('');
+  }
+  renderPipeline(currentPipelineFilter);
+}
+function clearPipelineFilters(){
+  const a=document.getElementById('pl-filter-account');const b=document.getElementById('pl-filter-am');const c=document.getElementById('pl-filter-csm');
+  if(a)a.value='';if(b)b.value='';if(c)c.value='';
+  renderPipeline(currentPipelineFilter);
+}
 function filterPipeline(stage,el){currentPipelineFilter=stage;document.querySelectorAll('#page-pipeline-list .tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');renderPipeline(stage);}
 function renderPipeline(stage){
   const el=document.getElementById('pipeline-list-content');
   const filtered=filterPipelineByUser(allPipelineData);
   let data=filtered.map(p=>({...p,_idx:allPipelineData.indexOf(p)}));
   if(stage!=='all')data=data.filter(p=>(p['Opportunity Stage']||p.stage)===stage);
+
+  // E1: Account/AM/CSM filters
+  const acctQ=(document.getElementById('pl-filter-account')?.value||'').trim().toLowerCase();
+  const amQ=(document.getElementById('pl-filter-am')?.value||'');
+  const csmQ=(document.getElementById('pl-filter-csm')?.value||'');
+  if(acctQ)data=data.filter(p=>(p['Account Name']||p.account||'').toLowerCase().includes(acctQ));
+  if(amQ)data=data.filter(p=>(p['Account Manager']||p.am||'')===amQ);
+  if(csmQ){
+    // Resolve CSM via Account_Master
+    const csmAccounts=new Set((centralData.accounts||[]).filter(a=>(a['CSM']||a.csm||'')===csmQ).map(a=>a['Company Name']||a.company||''));
+    data=data.filter(p=>csmAccounts.has(p['Account Name']||p.account||''));
+  }
   if(!data.length){el.innerHTML='<div class="empty-state"><div class="icon">📈</div><p>No entries.</p></div>';return;}
   const total=data.reduce((s,p)=>s+(Number(p['Potential MRR (₹)']||p.potentialMrr)||0),0);
-  el.innerHTML=`<div style="padding:12px 0 16px;font-size:13px;color:var(--text-mid);">${data.length} opportunities · MRR: <strong>₹${total.toLocaleString('en-IN')}</strong> ${getViewBadge()}</div><table><thead><tr><th>Account</th><th>AM</th><th>Type</th><th>Product(s)</th><th>Pot.MRR</th><th>One-time</th><th>Stage</th><th>Lead</th><th>Exp.Close</th><th>Billing</th><th>Billed</th><th>Age</th><th></th></tr></thead><tbody>${data.map(p=>{const s=p['Opportunity Stage']||p.stage,mrr=Number(p['Potential MRR (₹)']||p.potentialMrr||0),prod=p['Product/Modules']||p.products||'—',bm=p['Actual Billing Month']||p.billingMonth||'—';const age=daysSince(p['Timestamp']||p.timestamp);const isStale=age>30&&!['Closed Won','Closed Lost'].includes(s);return`<tr class="${isStale?'stale-row':''}"><td><strong>${p['Account Name']||p.account}</strong></td><td>${p['Account Manager']||p.am}</td><td><span class="badge badge-blue">${p['Opportunity Type']||p.oppType}</span></td><td style="max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${prod}">${prod}</td><td>₹${mrr.toLocaleString('en-IN')}</td><td style="color:${Number(p['One-time MRR']||p.oneTime||0)>0?'var(--amber)':'var(--text-light)'}">${Number(p['One-time MRR']||p.oneTime||0)>0?'₹'+Number(p['One-time MRR']||p.oneTime||0).toLocaleString('en-IN'):'—'}</td><td><span class="badge ${s==='Closed Won'?'badge-green':s==='Closed Lost'?'badge-red':s==='Proposal Sent'?'badge-gold':'badge-blue'}">${s}</span></td><td>${p['Lead Type']||p.leadType||'—'}</td><td>${p['Expected Close Date']||p.closeDate||'—'}</td><td>${s==='Closed Won'?`<strong>${bm}</strong>`:bm}</td><td><span class="badge ${(p['Billed']||p.billed)==='Yes'?'badge-green':'badge-gray'}">${p['Billed']||p.billed||'No'}</span></td><td><span class="${age>30&&!['Closed Won','Closed Lost'].includes(s)?'age-stale':age>14?'age-warn':'age-fresh'}">${age}d</span></td><td><button class="btn-sm btn-edit" onclick="openEditPipeline(${p._idx})">Edit</button></td></tr>`;}).join('')}</tbody></table>`;
+  el.innerHTML=`<div style="padding:12px 0 16px;font-size:13px;color:var(--text-mid);">${data.length} opportunities · MRR: <strong>₹${total.toLocaleString('en-IN')}</strong> ${getViewBadge()}</div><table><thead><tr><th>Account</th><th>AM</th><th>Type</th><th>Product(s)</th><th>Pot.MRR</th><th>One-time</th><th>Stage</th><th>Lead</th><th>Exp.Close</th><th>Billing</th><th>Billed</th><th>Age</th><th></th></tr></thead><tbody>${data.map(p=>{const s=p['Opportunity Stage']||p.stage,mrr=Number(p['Potential MRR (₹)']||p.potentialMrr||0),prod=p['Product/Modules']||p.products||'—',bm=p['Actual Billing Month']||p.billingMonth||'—';const age=daysSince(p['Timestamp']||p.timestamp);const isStale=age>30&&!['Closed Won','Closed Lost'].includes(s);return`<tr class="${isStale?'stale-row':''}"><td><strong>${p['Account Name']||p.account}</strong></td><td>${p['Account Manager']||p.am}</td><td><span class="badge badge-blue">${p['Opportunity Type']||p.oppType}</span></td><td style="max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${prod}">${prod}</td><td>₹${mrr.toLocaleString('en-IN')}</td><td style="color:${Number(p['One-time Value (₹)']||p['One-time MRR']||p.oneTime||0)>0?'var(--amber)':'var(--text-light)'}">${Number(p['One-time Value (₹)']||p['One-time MRR']||p.oneTime||0)>0?'₹'+Number(p['One-time Value (₹)']||p['One-time MRR']||p.oneTime||0).toLocaleString('en-IN'):'—'}</td><td><span class="badge ${s==='Closed Won'?'badge-green':s==='Closed Lost'?'badge-red':s==='Proposal Sent'?'badge-gold':'badge-blue'}">${s}</span></td><td>${p['Lead Type']||p.leadType||'—'}</td><td>${p['Expected Close Date']||p.closeDate||'—'}</td><td>${s==='Closed Won'?`<strong>${bm}</strong>`:bm}</td><td><span class="badge ${(p['Billed']||p.billed)==='Yes'?'badge-green':'badge-gray'}">${p['Billed']||p.billed||'No'}</span></td><td><span class="${age>30&&!['Closed Won','Closed Lost'].includes(s)?'age-stale':age>14?'age-warn':'age-fresh'}">${age}d</span></td><td><button class="btn-sm btn-edit" onclick="openEditPipeline(${p._idx})">Edit</button></td></tr>`;}).join('')}</tbody></table>`;
 }
 
 // ── EXPORT TO PDF ──
@@ -4967,7 +5124,11 @@ function buildCsmSummaryHtml(csm) {
       <div style="flex:1;display:flex;align-items:center;padding:0 0 0 4px">
         ${tile('Active Accounts', active.length, 'var(--navy)', active.length + ' active · ' + churned.length + ' churned')}
         ${tile('Active MRR', fmtMrrFull(activeMrr), 'var(--navy)', 'Current billing')}
-        ${tile('Closed Won MRR', wonMrr ? fmtMrrFull(wonMrr) : '₹0', wonMrr ? 'var(--green)' : 'var(--text-light)', 'Pipeline wins')}
+        <div style="flex:1;padding:0 22px;border-right:1px solid var(--border);cursor:pointer;" onclick="showCsmWonDrilldown('${csm.replace(/'/g,"\\'")}')">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.11em;color:var(--text-light);margin-bottom:5px">Closed Won MRR <span style="font-size:8px;color:var(--gold);">▼ drill</span></div>
+          <div style="font-size:20px;font-weight:800;color:${wonMrr?'var(--green)':'var(--text-light)'};line-height:1">${wonMrr?fmtMrrFull(wonMrr):'₹0'}</div>
+          <div style="font-size:10px;color:var(--text-light);margin-top:3px">Pipeline wins</div>
+        </div>
         ${tile('Open Pipeline', pipMrr ? fmtMrrFull(pipMrr) : '₹0', 'var(--amber)', 'In-progress deals')}
         ${tile('Churn MRR', churnMrr ? fmtMrrFull(churnMrr) : '₹0', churnMrr ? 'var(--red)' : 'var(--text-light)', churned.length + ' churned account' + (churned.length !== 1 ? 's' : ''))}
         <div style="flex:1;padding:0 22px">
